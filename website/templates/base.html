@@ -1,0 +1,52 @@
+{% load static %}
+{% load crispy_forms_tags %}
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}{% endblock%}</title>
+    <link rel="stylesheet"
+          href="{% static 'website/style.css' %}">
+</head>
+<body>
+
+<nav>
+<div>
+    <ul>
+        {% if user.is_authenticated %}
+        <li>
+            <a href="/logout">Logout</a>
+        </li>
+        <li>
+            <a href="#">Welcome, {{user.username}}</a>
+        </li>
+        {% else %}
+        <li>
+            <a href="{% url 'login' %}">Login</a>
+        </li>
+        {% endif %}
+    </ul>
+</div>
+    <a href="{% url 'home' %}">Home</a>
+</nav>
+
+{% if messages %}
+<div id="msg">
+    <ul class="messages">
+        {% for message in messages %}
+        <li {% if message.tags %} class="{{ message.tags }}"{% endif %}> {{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</div>
+<script>
+    var message_ele = document.getElementById("msg");
+
+    setTimeout(function(){
+    message_ele.style.display = "none";
+    }, 3000);
+    </script>
+{% block content %}
+{% endblock%}
+</body>
+</html>

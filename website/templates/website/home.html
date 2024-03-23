@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block title %} TMA Warehouse {% endblock %}
+
+{% block content %}
+
+<p>
+    Welcome to the Trade and Material Assets Warehouse.
+    {% if user.is_authenticated %}
+
+        What do you want to do?
+
+    {% else %}
+    <a href="/login">Log in</a> to start.
+    {% endif %}
+</p>
+
+{% endblock%}
+

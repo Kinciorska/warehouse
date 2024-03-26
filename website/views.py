@@ -3,9 +3,14 @@ from django.views import View
 from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
+from django.core.paginator import Paginator
 from django.views.generic.base import TemplateView
+from django.views.generic.list import ListView
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.views.generic.edit import UpdateView, DeleteView
 
-from .forms import NewUserForm
+from .forms import NewUserForm, ItemForm
+from .models import Items
 
 
 class HomePageView(TemplateView):
@@ -67,3 +72,67 @@ class LogoutView(View):
         logout(request)
         messages.info(request, "You have successfully logged out.")
         return redirect("home")
+
+
+class ItemsView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = 'website.view_items'
+    template_name = 'website/items.html'
+    paginate_by = 20
+    model = Items
+    item_form_class = ItemForm
+    order_by = 'item_name'
+
+    def get_page_obj(self, request, **ordering):
+        items_list = self.model.objects.all()
+        if ordering:
+            self.order_by = ordering['ordering']
+        ordered_items_list = items_list.order_by(self.order_by)
+        paginator = Paginator(ordered_items_list, self.paginate_by)
+        page_number = request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
+        return page_obj
+
+    def get(self, request, **ordering):
+        page_obj = self.get_page_obj(request, **ordering)
+        context = {
+            'page_obj': page_obj,
+            'create_item_form': self.item_form_class}
+
+        return render(request, self.template_name, context)
+
+    def post(self, request, **ordering):
+        form = self.item_form_class(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Item added successfully")
+            page_obj = self.get_page_obj(request, **ordering)
+            context = {
+                'page_obj': page_obj,
+                'create_item_form': self.item_form_class}
+
+            return render(request, self.template_name, context)
+
+        else:
+            messages.error(request, "Item not added")
+            page_obj = self.get_page_obj(request, **ordering)
+            context = {
+                'page_obj': page_obj,
+                'create_item_form': self.item_form_class}
+
+            return render(request, self.template_name, context)
+
+
+class ItemUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    permission_required = 'website.change_items'
+    model = Items
+    success_url = '/items'
+    fields = ['item_name', 'item_group', 'unit_of_measurement', 'quantity', 'price_without_VAT', 'status',
+              'storage_location', 'contact_person', 'photo']
+    template_name_suffix = '_update_form'
+
+
+class ItemDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    permission_required = 'website.delete_items'
+    model = Items
+    success_url = '/items'
+    template_name_suffix = '_confirm_delete'

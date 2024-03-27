@@ -5,15 +5,16 @@
 {% block title %} TMA Warehouse {% endblock %}
 
 {% block content %}
-
+<h2> Welcome to the Trade and Material Assets Warehouse.</h2>
 <p>
-    Welcome to the Trade and Material Assets Warehouse.
     {% if user.is_authenticated %}
-
-        What do you want to do?
-
+        <p>What do you want to do?</p>
+        <a href="/items">See items</a>
+        {% if perms.website.view_requests %}
+            <a href="{% url 'requests' %}">Requests</a>
+        {% endif %}
     {% else %}
-    <a href="/login">Log in</a> to start.
+        <a href="/login">Log in</a> to start.
     {% endif %}
 </p>
 

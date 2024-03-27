@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block title %} TMA Warehouse Requests {% endblock %}
+
+{% block content %}
+
+<h4>REQUEST LIST</h4>
+<table>
+    <thead>
+        <th><a href="{% url 'requests_ordered' 'employee_name' %}">EMPLOYEE NAME</a></th>
+        <th><a href="{% url 'requests_ordered' 'item_id' %}">ITEM</a></th>
+        <th><a href="{% url 'requests_ordered' 'unit_of_measurement' %}">UNIT OF MEASUREMENT</a></th>
+        <th><a href="{% url 'requests_ordered' 'quantity' %}">QUANTITY</a></th>
+        <th><a href="{% url 'requests_ordered' 'price_without_VAT' %}">PRICE WITHOUT VAT (UAH)</a></th>
+        <th><a href="{% url 'requests_ordered' 'comment' %}">COMMENT</a></th>
+        <th><a href="{% url 'requests_ordered' 'status' %}">STATUS</a></th>
+    </thead>
+    <tbody>
+    {% for request in page_obj %}
+        <tr>
+            <td>
+                {{ request.employee_name|upper }}
+            </td>
+            <td>
+                {{ request.item_id|upper }}
+            </td>
+            <td>
+                {{ request.unit_of_measurement|upper }}
+            </td>
+            <td>
+                {{ request.quantity|upper }}
+            </td>
+            <td>
+                {{ request.price_without_VAT|upper }}
+            </td>
+             <td>
+                {{ request.comment|upper }}
+            </td>
+            <td>
+                {{ request.get_status_display|upper }}
+            </td>
+            <td>
+                <a href="/requests/{{request.request_id}}/update/">Change status</a>
+            </td>
+            {% endfor %}
+        </tr>
+</table>
+
+
+<div class="pagination">
+    <span class="step-links">
+        {% if page_obj.has_previous %}
+            <a href="?page=1">&laquo; first</a>
+            <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+    </span>
+</div>
+
+{% endblock%}

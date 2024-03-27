@@ -3,7 +3,7 @@ from django.forms import ModelForm
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
-from .models import Items
+from .models import Items, Requests, RequestRow
 
 
 class NewUserForm(UserCreationForm):
@@ -22,3 +22,17 @@ class ItemForm(ModelForm):
         model = Items
         fields = ('item_name', 'item_group', 'unit_of_measurement', 'quantity', 'price_without_VAT', 'status',
                   'storage_location', 'contact_person', 'photo')
+
+
+class RequestStatusForm(ModelForm):
+
+    class Meta:
+        model = Requests
+        fields = ('status', 'comment')
+
+
+class RequestForm(ModelForm):
+
+    class Meta:
+        model = Requests
+        fields = ('unit_of_measurement', 'quantity', 'comment')

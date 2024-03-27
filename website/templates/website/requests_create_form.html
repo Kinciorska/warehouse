@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block title %} TMA Warehouse Requests {% endblock %}
+
+{% block content %}
+
+<h3>Create an Order</h3>
+
+<form method="post">{% csrf_token %}
+    {{ form.as_p }}
+    <input type="hidden" name="item_id" value={{ item_id }}>
+    <input type="submit" value="Submit">
+</form>
+
+<a href="/requests">Cancel</a>
+
+
+{% endblock%}

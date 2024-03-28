@@ -55,3 +55,26 @@ class Requests(models.Model):
         return f"Item: {self.item_id} in quantity: {self.quantity}. Status: {self.status}"
 
 
+class RequestRow(models.Model):
+
+    class Status(models.TextChoices):
+        NEW = 'new', _("New")
+        APPROVED = 'apr', _("Approved")
+        REJECTED = 'rej', _("Rejected")
+
+    request_row_id = models.BigAutoField(primary_key=True)
+    request_id = models.IntegerField()
+    request_row = models.IntegerField()
+    item_id = models.ForeignKey(Items, on_delete=models.CASCADE)
+    unit_of_measurement = models.CharField(max_length=3, choices=Items.ItemUnit)
+    quantity = models.IntegerField(default=1)
+    price_without_VAT = models.DecimalField(max_digits=6, decimal_places=2)
+    comment = models.TextField(max_length=250, blank=True)
+    status = models.CharField(max_length=3, choices=Status, default=Status.NEW)
+
+    class Meta:
+        verbose_name_plural = "Request Rows"
+        ordering = ['request_id']
+
+    def __str__(self):
+        return f"Request number: {self.request_id} Item: {self.item_id}"

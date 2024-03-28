@@ -9,14 +9,22 @@
 <p>
     {% if user.is_authenticated %}
         <p>What do you want to do?</p>
-        <a href="/items">See items</a>
-        {% if perms.website.view_requests %}
-            <a href="{% url 'requests' %}">Requests</a>
+
+        {% if perms.website.view_items %}
+            <a href="/items">See items</a>
         {% endif %}
+        {% if perms.website.view_requests %}
+            <a href="{% url 'requests' %}">See Requests</a>
+        {% endif %}
+        {% if perms.website.view_requestrow %}
+            <a href="{% url 'request_row' %}">See Request Rows</a>
+        {% else %}
+            <p>Contact your administrator to give you more access</p>
+        {% endif %}
+
     {% else %}
         <a href="/login">Log in</a> to start.
     {% endif %}
 </p>
 
 {% endblock%}
-

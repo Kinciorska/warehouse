@@ -12,9 +12,12 @@
     {{ form.as_p }}
     <input type="hidden" name="item_id" value={{ item_id }}>
     <input type="submit" value="Submit">
+    {{ request_row_form }}
+    <input type="submit" name="add_to_request" value="Add to Request">
 </form>
 
 <a href="/requests">Cancel</a>
 
 
 {% endblock%}
+

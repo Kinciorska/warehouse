@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block title %} TMA Warehouse Requests {% endblock %}
+
+{% block content %}
+
+<h3> Change the request rows: </h3>
+    {% for request_row_object in request_row_objects %}
+       <h4> {{ request_row_object }}</h4>
+    {% endfor %}
+
+<form method="post">{% csrf_token %}
+    {{ form.as_p }}
+    <input type="hidden" name="request_id" value={{ request_id }}>
+    <input type="submit" value="Update">
+</form>
+
+{% endblock%}

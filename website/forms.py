@@ -36,3 +36,16 @@ class RequestForm(ModelForm):
     class Meta:
         model = Requests
         fields = ('unit_of_measurement', 'quantity', 'comment')
+
+
+class RequestForRequestRowForm(forms.Form):
+    request = forms.ModelChoiceField(queryset=Requests.objects.filter(status=Requests.Status.NEW), required=False)
+    requests = forms.ModelChoiceField(queryset=RequestRow.objects.filter(status=RequestRow.Status.NEW),
+                                      required=False)
+
+
+class RequestRowStatusForm(ModelForm):
+
+    class Meta:
+        model = RequestRow
+        fields = ('status', 'comment')

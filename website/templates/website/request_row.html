@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block title %} TMA Warehouse Request Row {% endblock %}
+
+{% block content %}
+
+<h4>REQUEST ROW LIST</h4>
+<table>
+    <thead>
+        <th>REQUEST NUMBER</th>
+        <th>ROW</th>
+        <th>ITEM</th>
+        <th>UNIT OF MEASUREMENT</th>
+        <th>QUANTITY</th>
+        <th>PRICE WITHOUT VAT</th>
+        <th>COMMENT</th>
+        <th>STATUS</th>
+
+    </thead>
+    <tbody>
+    {% for request_row in page_obj %}
+        <tr>
+            <td>
+                {{ request_row.request_id }}
+            </td>
+            <td>
+                {{ request_row.request_row }}
+            </td>
+            <td>
+                {{ request_row.item_id|upper }}
+            </td>
+            <td>
+                {{ request_row.unit_of_measurement|upper }}
+            </td>
+            <td>
+                {{ request_row.quantity|upper }}
+            </td>
+             <td>
+                {{ request_row.price_without_VAT|upper }}
+            </td>
+             <td>
+                {{ request_row.comment|upper }}
+            </td>
+            <td>
+                {{ request_row.get_status_display|upper }}
+            </td>
+            <td>
+                <a href="/request_row/{{request_row.request_id}}/update/">Change status</a>
+            </td>
+            {% endfor %}
+        </tr>
+</table>
+
+
+<div class="pagination">
+    <span class="step-links">
+        {% if page_obj.has_previous %}
+            <a href="?page=1">&laquo; first</a>
+            <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+    </span>
+</div>
+
+{% endblock%}

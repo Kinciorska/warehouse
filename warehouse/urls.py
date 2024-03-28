@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path
 
 from website.views import (HomePageView, RegisterView, LoginView, LogoutView, ItemsView, ItemUpdateView, ItemDeleteView,
-                           RequestView, RequestCreateView, RequestUpdateView)
+                           RequestView, RequestCreateView, RequestUpdateView, RequestRowView, RequestRowUpdateView)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -18,4 +18,6 @@ urlpatterns = [
     path('requests/<ordering>', RequestView.as_view(), name='requests_ordered'),
     path('requests/<item_id>/create/', RequestCreateView.as_view(), name='requests_create'),
     path('requests/<pk>/update/', RequestUpdateView.as_view(), name='requests_update'),
+    path('request_row', RequestRowView.as_view(), name='request_row'),
+    path('request_row/<pk>/update/', RequestRowUpdateView.as_view(), name='request_row_update'),
 ]

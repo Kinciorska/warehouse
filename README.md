@@ -54,4 +54,4 @@ Apply Django migrations using
 
 
 #### License
-This Pokemon Team Builder App is open-source and distributed under the MIT License.
+This app is open-source and distributed under the MIT License.

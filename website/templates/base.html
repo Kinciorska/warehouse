@@ -10,35 +10,50 @@
 <body>
 
 <nav>
-<div>
-    <ul>
-        {% if user.is_authenticated %}
-        <li>
-            <a href="/logout">Logout</a>
-        </li>
-        <li>
-            <p>Welcome, {{user.username}}</p>
-        </li>
-        {% else %}
-        <li>
-            <a href="{% url 'login' %}">Login</a>
-        </li>
-        {% endif %}
-    </ul>
-</div>
-    <a href="{% url 'home' %}">Home</a>
+    <div>
+        <ul class="nav-bar-ul-account">
+            <li>
+                <a class="nav-bar-account-a"
+                   href="">{{ user.username|upper }}</a>
 
-    {% if perms.website.view_items %}
-            <a href="/items">Items</a>
-    {% endif %}
-    {% if perms.website.view_requests %}
-            <a href="{% url 'requests' %}">Requests</a>
-    {% endif %}
-    {% if perms.website.view_requestrow %}
-            <a href="{% url 'request_row' %}">Request Rows</a>
-    {% endif %}
-
-
+            </li>
+            {% if user.is_authenticated %}
+            <li>
+                <a class="nav-bar-account-a"
+                   href="/logout">Logout</a>
+            </li>
+            {% else %}
+            <li>
+                <a class="nav-bar-account-a"
+                   href="{% url 'login' %}">Login</a>
+            </li>
+            {% endif %}
+        </ul>
+        <ul class="nav-bar-ul">
+            <li class="nav-bar-li">
+                <a class="nav-bar-a"
+                   href="{% url 'home' %}">Home</a>
+            </li>
+            <li class="nav-bar-li">
+                {% if perms.website.view_items %}
+                    <a class="nav-bar-a"
+                       href="/items">Items</a>
+                {% endif %}
+            </li>
+            <li class="nav-bar-li">
+                {% if perms.website.view_requests %}
+                    <a class="nav-bar-a"
+                        href="{% url 'requests' %}">Requests</a>
+                {% endif %}
+            </li>
+            <li class="nav-bar-li">
+                {% if perms.website.view_requestrow %}
+                    <a class="nav-bar-a"
+                        href="{% url 'request_row' %}">Request Rows</a>
+                {% endif %}
+            </li>
+        </ul>
+    </div>
 </nav>
 
 {% if messages %}

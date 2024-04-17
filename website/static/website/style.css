@@ -1,32 +1,82 @@
-body {
+nav {
+  background-color: #3e4a61;
+}
 
-font-family: sans-serif;
-color: darkslategrey;
-background-color: whitesmoke;
+.nav-bar-ul-account{
+  text-align: right;
+}
+
+.nav-bar-account-a{
+  color: #d9dad7;
+}
+
+.nav-bar-ul{
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.nav-bar-li{
+  float: left;
+}
+
+.nav-bar-a{
+  display: block;
+  color: white;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+}
+
+.nav-bar-a:hover{
+  background-color: #1a2639;
+}
+
+body {
+  font-family: sans-serif;
+  color: #1a2639;
+  background-color: #d9dad7;
 
 }
 
 h1 {
-
-text-align: center;
-
+  text-align: center;
 }
 
 a {
-
-font-family: sans-serif;
-color: darkslategrey;
-
+  font-family: sans-serif;
+  color: #c24d2c;
 }
 
 a:visited {
-
-text-decoration: none;
-
+  text-decoration: none;
 }
 
 ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 14px 16px;
+}
 
-list-style: none;
+.center {
+  text-align: center;
+}
 
+table, th, td {
+  border: 2px solid;
+  color: #3e4a61;
+}
+
+td {
+  text-align: center;
+}
+
+tr:hover {
+  background-color: #d3d3d3;
+}
+
+.messages{
+  color: #1a2639;
+  text-align: center;
 }

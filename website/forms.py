@@ -49,3 +49,7 @@ class RequestRowStatusForm(ModelForm):
     class Meta:
         model = RequestRow
         fields = ('status', 'comment')
+
+
+class SearchRequestForm(forms.Form):
+    request_id = forms.IntegerField(label="", widget=forms.TextInput(attrs={'placeholder': 'Search...'}))

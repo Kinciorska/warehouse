@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block title %} TMA Warehouse Requests {% endblock %}
+
+{% block content %}
+
+<table>
+    <thead>
+        <th class="single_request_table_head">NUMBER</th>
+        <th class="single_request_table_head">EMPLOYEE NAM</th>
+        <th class="single_request_table_head">ITEM</th>
+        <th class="single_request_table_head">UNIT OF MEASUREMENT</th>
+        <th class="single_request_table_head">QUANTITY</th>
+        <th class="single_request_table_head">PRICE WITHOUT VAT (UAH)</th>
+        <th class="single_request_table_head">COMMENT</th>
+        <th class="single_request_table_head">STATUS</th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+                {{ request_object.request_id }}
+            </td>
+            <td>
+                {{ request_object.employee_name|upper }}
+            </td>
+            <td>
+                {{ request_object.item_id|upper }}
+            </td>
+            <td>
+                {{ request_object.unit_of_measurement|upper }}
+            </td>
+            <td>
+                {{ request_object.quantity|upper }}
+            </td>
+            <td>
+                {{ request_object.price_without_VAT|upper }}
+            </td>
+             <td>
+                {{ request_object.comment|upper }}
+            </td>
+            <td>
+                {{ request_object.get_status_display|upper }}
+            </td>
+            <td>
+                <a href="/requests/{{request_object.request_id}}/update/">Change status</a>
+            </td>
+        </tr>
+</table>
+
+{% endblock%}

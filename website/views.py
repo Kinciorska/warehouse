@@ -4,8 +4,9 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
+from django.http import Http404
 from django.db import IntegrityError, transaction
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic.base import TemplateView
@@ -13,7 +14,7 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.list import ListView
 
 
-from .forms import NewUserForm, ItemForm, RequestStatusForm, RequestForm, RequestForRequestRowForm
+from .forms import NewUserForm, ItemForm, RequestStatusForm, RequestForm, RequestForRequestRowForm, SearchRequestForm
 from .models import Items, Requests, RequestRow
 from .utils import check_if_item_in_stock, get_next_request_row_request_id, get_next_request_row_number
 
@@ -148,7 +149,7 @@ class RequestView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     template_name = 'website/requests.html'
     paginate_by = 20
     model = Requests
-    form_class = RequestStatusForm
+    form_class = SearchRequestForm
     order_by = 'item_id'
 
     def get_page_obj(self, request, **ordering):
@@ -163,29 +164,41 @@ class RequestView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
 
     def get(self, request, **ordering):
         page_obj = self.get_page_obj(request, **ordering)
-        context = {
-            'page_obj': page_obj,
-            'create_form': self.form_class}
+        context = {'page_obj': page_obj,
+                   'search_form': self.form_class}
         return render(request, self.template_name, context)
 
-    def post(self, request, **ordering):
-        form = self.form_class(request.POST)
+    def post(self, request, **request_id):
+        form = SearchRequestForm(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(request, "Item added successfully")
-            page_obj = self.get_page_obj(request, **ordering)
-            context = {
-                'page_obj': page_obj,
-                'update_form': form}
-            return render(request, self.template_name, context)
+            data = form.cleaned_data
+            request_id = data['request_id']
+            return redirect('request_by_id', request_id)
 
         else:
-            messages.error(request, "Status not changed")
-            page_obj = self.get_page_obj(request, **ordering)
+            messages.error(request, "Something is wrong with the request number")
+            page_obj = self.get_page_obj(request, **request_id)
             context = {
                 'page_obj': page_obj,
-                'update_form': form}
+                'search_form': self.form_class}
             return render(request, self.template_name, context)
+
+
+class SingleRequestView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = ['website.view_requests', 'website.change_requests']
+    template_name = 'website/requests_single.html'
+    model = Requests
+    form_class = SearchRequestForm
+
+    def get(self, request, **request_id):
+        request_id = request_id['request_id']
+        try:
+            request_object = get_object_or_404(self.model.objects, request_id=request_id)
+            context = {'request_object': request_object}
+            return render(request, self.template_name, context)
+        except Http404:
+            messages.error(request, "There is no such request")
+            return redirect('requests')
 
 
 class RequestCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):

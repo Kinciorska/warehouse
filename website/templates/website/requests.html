@@ -7,8 +7,24 @@
 {% block content %}
 
 <h4>REQUEST LIST</h4>
+
+<div class="wrap_search">
+    <form id="search_request" class="search_form" method="post">
+        {{ search_form|crispy }}
+        {% csrf_token %}
+    <button type="submit">
+        <i class="fa fa-search"></i>
+    </button>
+</div>
+
+
+    <input class="this is the original" type="submit" value="Search">
+
+</form>
+
 <table>
     <thead>
+        <th><a href="{% url 'requests_ordered' 'request_id' %}">NUMBER</a></th>
         <th><a href="{% url 'requests_ordered' 'employee_name' %}">EMPLOYEE NAME</a></th>
         <th><a href="{% url 'requests_ordered' 'item_id' %}">ITEM</a></th>
         <th><a href="{% url 'requests_ordered' 'unit_of_measurement' %}">UNIT OF MEASUREMENT</a></th>
@@ -20,6 +36,9 @@
     <tbody>
     {% for request in page_obj %}
         <tr>
+            <td>
+                {{ request.request_id }}
+            </td>
             <td>
                 {{ request.employee_name|upper }}
             </td>

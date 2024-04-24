@@ -52,4 +52,18 @@ class RequestRowStatusForm(ModelForm):
 
 
 class SearchRequestForm(forms.Form):
-    request_id = forms.IntegerField(label="", widget=forms.TextInput(attrs={'placeholder': 'Search...'}))
+    request_id = forms.IntegerField(label="", widget=forms.NumberInput(attrs={'placeholder': 'Search...'}))
+
+
+class FilterRequestForm(forms.Form):
+    quantity_0_10 = forms.BooleanField(label="QUANTITY <10", required=False)
+    quantity_10_50 = forms.BooleanField(label="QUANTITY 10-50", required=False)
+    quantity_50_100 = forms.BooleanField(label="QUANTITY 50-100", required=False)
+    quantity_100_9999999 = forms.BooleanField(label="QUANTITY >100", required=False)
+    price_0_10 = forms.BooleanField(label="PRICE <10", required=False)
+    price_10_50 = forms.BooleanField(label="PRICE 10-50", required=False)
+    price_50_100 = forms.BooleanField(label="PRICE 50-100", required=False)
+    price_100_9999999 = forms.BooleanField(label="PRICE >100", required=False)
+    status_new = forms.BooleanField(label="NEW", required=False)
+    status_approved = forms.BooleanField(label="APPROVED", required=False)
+    status_rejected = forms.BooleanField(label="REJECTED", required=False)

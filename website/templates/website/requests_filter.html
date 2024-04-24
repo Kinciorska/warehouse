@@ -12,33 +12,23 @@
     <form id="search_request" class="search_form" method="post">
         {{ search_form|crispy }}
         {% csrf_token %}
-    <button type="submit"
-            name="search"
-            value="search">
+    <button type="submit">
         <i class="fa fa-search"></i>
     </button>
-    </form>
-</div>
-
-<div class="wrap_filter">
-    <form id="filter_request" class="filter_form" method="post">
-        {{ filter_form }}
-        {% csrf_token %}
-        <input type="submit" name="filter" value="Filter">
     </form>
 </div>
 
 
 <table>
     <thead>
-        <th><a href="{% url 'requests_ordered' 'request_id' %}">NUMBER</a></th>
-        <th><a href="{% url 'requests_ordered' 'employee_name' %}">EMPLOYEE NAME</a></th>
-        <th><a href="{% url 'requests_ordered' 'item_id' %}">ITEM</a></th>
-        <th><a href="{% url 'requests_ordered' 'unit_of_measurement' %}">UNIT OF MEASUREMENT</a></th>
-        <th><a href="{% url 'requests_ordered' 'quantity' %}">QUANTITY</a></th>
-        <th><a href="{% url 'requests_ordered' 'price_without_VAT' %}">PRICE WITHOUT VAT (UAH)</a></th>
-        <th><a href="{% url 'requests_ordered' 'comment' %}">COMMENT</a></th>
-        <th><a href="{% url 'requests_ordered' 'status' %}">STATUS</a></th>
+        <th class="single_request_table_head">NUMBER</th>
+        <th class="single_request_table_head">EMPLOYEE NAM</th>
+        <th class="single_request_table_head">ITEM</th>
+        <th class="single_request_table_head">UNIT OF MEASUREMENT</th>
+        <th class="single_request_table_head">QUANTITY</th>
+        <th class="single_request_table_head">PRICE WITHOUT VAT (UAH)</th>
+        <th class="single_request_table_head">COMMENT</th>
+        <th class="single_request_table_head">STATUS</th>
     </thead>
     <tbody>
     {% for request in page_obj %}
@@ -70,8 +60,10 @@
             <td>
                 <a href="/requests/{{request.request_id}}/update/">Change status</a>
             </td>
-            {% endfor %}
         </tr>
+    {% empty %}
+    <p>Oops! We couldn't find any records matching your filter criteria.</p>
+    {% endfor %}
 </table>
 
 

@@ -1,3 +1,5 @@
+import re
+
 from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
@@ -6,6 +8,7 @@ from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.http import Http404
 from django.db import IntegrityError, transaction
+from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.translation import gettext_lazy as _
 from django.views import View
@@ -13,10 +16,10 @@ from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.list import ListView
 
-
-from .forms import NewUserForm, ItemForm, RequestStatusForm, RequestForm, RequestForRequestRowForm, SearchRequestForm
+from .forms import (NewUserForm, ItemForm, RequestStatusForm, RequestForm, RequestForRequestRowForm, SearchRequestForm,
+                    FilterRequestForm)
 from .models import Items, Requests, RequestRow
-from .utils import check_if_item_in_stock, get_next_request_row_request_id, get_next_request_row_number
+from .utils import FILTER_STATUS, check_if_item_in_stock, get_next_request_row_request_id, get_next_request_row_number
 
 
 class HomePageView(TemplateView):
@@ -165,19 +168,28 @@ class RequestView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     def get(self, request, **ordering):
         page_obj = self.get_page_obj(request, **ordering)
         context = {'page_obj': page_obj,
-                   'search_form': self.form_class}
+                   'search_form': self.form_class,
+                   'filter_form': FilterRequestForm}
         return render(request, self.template_name, context)
 
-    def post(self, request, **request_id):
-        form = SearchRequestForm(request.POST)
-        if form.is_valid():
-            data = form.cleaned_data
-            request_id = data['request_id']
+    def post(self, request, **parameters):
+        data = request.POST
+        search_form = SearchRequestForm(data)
+        filter_form = FilterRequestForm(data)
+
+        if 'search' in data and search_form.is_valid():
+            cleaned_data = search_form.cleaned_data
+            request_id = cleaned_data['request_id']
             return redirect('request_by_id', request_id)
 
+        if 'filter' in data and filter_form.is_valid and len(data) > 2:  # if there are only 2 params, no filter is applied
+            filter_values = [parameter for parameter, value in data.items() if value == 'on']
+            return redirect('requests_filtered', filter_values)
+
         else:
-            messages.error(request, "Something is wrong with the request number")
-            page_obj = self.get_page_obj(request, **request_id)
+            messages.error(request, "Invalid input. Please make sure your search or filter criteria are correct "
+                                    "and try again")
+            page_obj = self.get_page_obj(request, **parameters)
             context = {
                 'page_obj': page_obj,
                 'search_form': self.form_class}
@@ -199,6 +211,111 @@ class SingleRequestView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         except Http404:
             messages.error(request, "There is no such request")
             return redirect('requests')
+
+
+class FilterRequestView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = ['website.view_requests', 'website.change_requests']
+    template_name = 'website/requests_filter.html'
+    paginate_by = 20
+    model = Requests
+    form_class = SearchRequestForm
+    order_by = 'item_id'
+
+    def get_filtered_obj(self, filter_values):
+        filter_values = filter_values.split(',')
+        price = filter_values[0]
+        quantity = filter_values[1]
+        status = filter_values[2]
+        min_price = 0
+        max_price = 9999999
+        min_quantity = 0
+        max_quantity = 9999999
+
+        if 'not' not in price:
+            min_price = int(price.split('_')[1])
+            max_price = int(price.split('_')[2])
+
+        if 'not' not in quantity:
+            min_quantity = int(quantity.split('_')[1])
+            max_quantity = int(quantity.split('_')[2])
+
+        requests_objects = self.model.objects.filter(
+            price_without_VAT__lte=max_price,
+            price_without_VAT__gte=min_price,
+            quantity__lte=max_quantity,
+            quantity__gte=min_quantity
+        )
+
+        if 'not' not in status and len(quantity.split('_')) <= 3:
+            # if all statuses are on, there is no need to filter by status
+            match len(status.split('_')):
+                case 2:
+                    filtered_requests_objects = requests_objects.filter(status=FILTER_STATUS[status.split('_')[1]])
+                case 3:
+                    status_1 = FILTER_STATUS[status.split('_')[1]]
+                    status_2 = FILTER_STATUS[status.split('_')[2]]
+                    filtered_requests_objects = requests_objects.filter(Q(status=status_1) | Q(status=status_2))
+
+            return filtered_requests_objects
+
+        filtered_requests_objects = requests_objects
+
+        return filtered_requests_objects
+
+    def get_page_obj(self, request, filter_values):
+        filtered_requests_objects = self.get_filtered_obj(filter_values)
+        ordered_requests_list = filtered_requests_objects.order_by(self.order_by)
+        paginator = Paginator(ordered_requests_list, self.paginate_by)
+        page_number = request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
+        return page_obj
+
+    @staticmethod
+    def get_min_max_values(filter_value):
+        if not filter_value:
+            return 'not'
+        values_str = ''.join(filter_value)
+        values_list = re.findall(r'\d+', values_str)  # finds numbers
+        values = [int(value) for value in values_list]
+        max_value = max(values)
+        min_value = min(values)
+        values = f'_{min_value}_{max_value}'
+        return values
+
+    @staticmethod
+    def get_status_values(filter_value):
+        if not filter_value:
+            return 'not'
+        values = [f'_{status[7]}' for status in filter_value]
+        values = ''.join(values)
+        return values
+
+    def get_filter_values(self, filtering):
+        filter_values_str = filtering[2:-2]  # removes the square bracket and comma
+        filter_values = filter_values_str.split("', '")
+
+        price = [value for value in filter_values if 'price' in value]
+        price_values = self.get_min_max_values(price)
+        price_values = f'p{price_values}'
+
+        quantity = [value for value in filter_values if 'quantity' in value]
+        quantity_values = self.get_min_max_values(quantity)
+        quantity_values = f'q{quantity_values}'
+
+        status = [value for value in filter_values if 'status' in value]
+        status_values = self.get_status_values(status)
+        status_values = f's{status_values}'
+
+        filter_values = price_values + ',' + quantity_values + ',' + status_values
+
+        return filter_values
+
+    def get(self, request, filtering):
+        filter_values = self.get_filter_values(filtering)
+        page_obj = self.get_page_obj(request, filter_values)
+        context = {'page_obj': page_obj,
+                   'search_form': self.form_class}
+        return render(request, self.template_name, context)
 
 
 class RequestCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
@@ -230,7 +347,7 @@ class RequestCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
                     price_without_VAT=getattr(request_object, 'price_without_VAT'),
                     comment=getattr(request_object, 'comment'),
                     status=getattr(request_object, 'status')
-                    )
+                )
                 new_request_row_object.save()
                 request_object.delete()
         except IntegrityError:
@@ -265,10 +382,10 @@ class RequestCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
                 'comment': data['comment'],
                 'status': self.model.Status.NEW,
             }
-            if 'add_to_request' in data:    # checks if the user wanted to add a new request or add it to request row
+            if 'add_to_request' in data:  # checks if the user wanted to add a new request or add it to request row
                 next_request_row_request_id = get_next_request_row_request_id()
 
-                if not data['requests']:    # implies that there is no request row object yet, it should be created
+                if not data['requests']:  # implies that there is no request row object yet, it should be created
                     selected_request_id = int(data['request'])
                     request_row_request_id = next_request_row_request_id
                     try:
@@ -279,7 +396,7 @@ class RequestCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
                     except IntegrityError:
                         messages.error(request, "Error adding to Requests Row, contact the administrator")
 
-                if not data['request']:    # implies that there is a request row object to be connected to
+                if not data['request']:  # implies that there is a request row object to be connected to
                     selected_request_row_id = int(data['requests'])
                     request_row_request_id = getattr(RequestRow.objects.get(request_row_id=selected_request_row_id),
                                                      'request_id')
@@ -411,7 +528,7 @@ class RequestRowUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateVi
         try:
             with transaction.atomic():
 
-                for number in range(1, number_of_request_in_request_row+1):
+                for number in range(1, number_of_request_in_request_row + 1):
                     request_row_object = self.model.objects.get(request_id=request_row_request_id, request_row=number)
                     update_status(status, request_row_object, self.model)
 

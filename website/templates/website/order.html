@@ -2,14 +2,14 @@
 
 {% load crispy_forms_tags %}
 
-{% block title %} TMA Warehouse Requests {% endblock %}
+{% block title %} TMA Warehouse Orders {% endblock %}
 
 {% block content %}
 
-<h4>REQUEST LIST</h4>
+<h4>ORDER LIST</h4>
 
 <div class="wrap_search">
-    <form id="search_request" class="search_form" method="post">
+    <form id="search_order" class="search_form" method="post">
         {{ search_form|crispy }}
         {% csrf_token %}
     <button type="submit"
@@ -21,7 +21,7 @@
 </div>
 
 <div class="wrap_filter">
-    <form id="filter_request" class="filter_form" method="post">
+    <form id="filter_order" class="filter_form" method="post">
         {{ filter_form }}
         {% csrf_token %}
         <input type="submit" name="filter" value="Filter">
@@ -31,44 +31,44 @@
 
 <table>
     <thead>
-        <th><a href="{% url 'requests_ordered' 'request_id' %}">NUMBER</a></th>
-        <th><a href="{% url 'requests_ordered' 'employee_name' %}">EMPLOYEE NAME</a></th>
-        <th><a href="{% url 'requests_ordered' 'item_id' %}">ITEM</a></th>
-        <th><a href="{% url 'requests_ordered' 'unit_of_measurement' %}">UNIT OF MEASUREMENT</a></th>
-        <th><a href="{% url 'requests_ordered' 'quantity' %}">QUANTITY</a></th>
-        <th><a href="{% url 'requests_ordered' 'price_without_VAT' %}">PRICE WITHOUT VAT (UAH)</a></th>
-        <th><a href="{% url 'requests_ordered' 'comment' %}">COMMENT</a></th>
-        <th><a href="{% url 'requests_ordered' 'status' %}">STATUS</a></th>
+        <th><a href="{% url 'orders_ordered' 'order_id' %}">NUMBER</a></th>
+        <th><a href="{% url 'orders_ordered' 'employee_name' %}">EMPLOYEE NAME</a></th>
+        <th><a href="{% url 'orders_ordered' 'item_id' %}">ITEM</a></th>
+        <th><a href="{% url 'orders_ordered' 'unit_of_measurement' %}">UNIT OF MEASUREMENT</a></th>
+        <th><a href="{% url 'orders_ordered' 'quantity' %}">QUANTITY</a></th>
+        <th><a href="{% url 'orders_ordered' 'price_without_VAT' %}">PRICE WITHOUT VAT (UAH)</a></th>
+        <th><a href="{% url 'orders_ordered' 'comment' %}">COMMENT</a></th>
+        <th><a href="{% url 'orders_ordered' 'status' %}">STATUS</a></th>
     </thead>
     <tbody>
-    {% for request in page_obj %}
+    {% for order in page_obj %}
         <tr>
             <td>
-                {{ request.request_id }}
+                {{ order.order_id }}
             </td>
             <td>
-                {{ request.employee_name|upper }}
+                {{ order.employee_name|upper }}
             </td>
             <td>
-                {{ request.item_id|upper }}
+                {{ order.item_id|upper }}
             </td>
             <td>
-                {{ request.unit_of_measurement|upper }}
+                {{ order.unit_of_measurement|upper }}
             </td>
             <td>
-                {{ request.quantity|upper }}
+                {{ order.quantity|upper }}
             </td>
             <td>
-                {{ request.price_without_VAT|upper }}
+                {{ order.price_without_VAT|upper }}
             </td>
              <td>
-                {{ request.comment|upper }}
+                {{ order.comment|upper }}
             </td>
             <td>
-                {{ request.get_status_display|upper }}
+                {{ order.get_status_display|upper }}
             </td>
             <td>
-                <a href="/requests/{{request.request_id}}/update/">Change status</a>
+                <a href="/orders/{{ order.order_id }}/update/">Change status</a>
             </td>
             {% endfor %}
         </tr>

@@ -36,21 +36,21 @@
                    href="{% url 'home' %}">Home</a>
             </li>
             <li class="nav-bar-li">
-                {% if perms.website.view_items %}
+                {% if perms.website.view_item %}
                     <a class="nav-bar-a"
                        href="/items">Items</a>
                 {% endif %}
             </li>
             <li class="nav-bar-li">
-                {% if perms.website.view_requests %}
+                {% if perms.website.view_order %}
                     <a class="nav-bar-a"
-                        href="{% url 'requests' %}">Requests</a>
+                        href="{% url 'orders' %}">Orders</a>
                 {% endif %}
             </li>
             <li class="nav-bar-li">
-                {% if perms.website.view_requestrow %}
+                {% if perms.website.view_linkedorder %}
                     <a class="nav-bar-a"
-                        href="{% url 'request_row' %}">Request Rows</a>
+                        href="{% url 'linked_orders' %}">Linked Orders</a>
                 {% endif %}
             </li>
         </ul>

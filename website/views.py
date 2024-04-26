@@ -16,10 +16,10 @@ from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.list import ListView
 
-from .forms import (NewUserForm, ItemForm, RequestStatusForm, RequestForm, RequestForRequestRowForm, SearchRequestForm,
-                    FilterRequestForm)
-from .models import Items, Requests, RequestRow
-from .utils import FILTER_STATUS, check_if_item_in_stock, get_next_request_row_request_id, get_next_request_row_number
+from .forms import (NewUserForm, ItemForm, OrderStatusForm, OrderForm, OrderForLinkedOrderForm, LinkedOrderStatusForm,
+                    SearchOrderForm, FilterOrderForm)
+from .models import Item, Order, LinkedOrder
+from .utils import FILTER_STATUS, check_if_item_in_stock, get_next_order_number, get_next_position_in_linked_order
 
 
 class HomePageView(TemplateView):
@@ -84,10 +84,10 @@ class LogoutView(View):
 
 
 class ItemsView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
-    permission_required = 'website.view_items'
-    template_name = 'website/items.html'
+    permission_required = 'website.view_item'
+    template_name = 'website/item.html'
     paginate_by = 20
-    model = Items
+    model = Item
     item_form_class = ItemForm
     order_by = 'item_name'
 
@@ -132,8 +132,8 @@ class ItemsView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
 
 
 class ItemUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
-    permission_required = 'website.change_items'
-    model = Items
+    permission_required = 'website.change_item'
+    model = Item
     success_url = '/items'
     fields = ['item_name', 'item_group', 'unit_of_measurement', 'quantity', 'price_without_VAT', 'status',
               'storage_location', 'contact_person', 'photo']
@@ -142,25 +142,25 @@ class ItemUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
 
 class ItemDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     permission_required = 'website.delete_items'
-    model = Items
+    model = Item
     success_url = '/items'
     template_name_suffix = '_confirm_delete'
 
 
-class RequestView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
-    permission_required = ['website.view_requests', 'website.change_requests']
-    template_name = 'website/requests.html'
+class OrderView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = ['website.view_order', 'website.change_order']
+    template_name = 'website/order.html'
     paginate_by = 20
-    model = Requests
-    form_class = SearchRequestForm
+    model = Order
+    form_class = SearchOrderForm
     order_by = 'item_id'
 
     def get_page_obj(self, request, **ordering):
-        requests_list = self.model.objects.all()
+        order_list = self.model.objects.all()
         if ordering:
             self.order_by = ordering['ordering']
-        ordered_requests_list = requests_list.order_by(self.order_by)
-        paginator = Paginator(ordered_requests_list, self.paginate_by)
+        ordered_order_list = order_list.order_by(self.order_by)
+        paginator = Paginator(ordered_order_list, self.paginate_by)
         page_number = request.GET.get("page")
         page_obj = paginator.get_page(page_number)
         return page_obj
@@ -169,22 +169,22 @@ class RequestView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         page_obj = self.get_page_obj(request, **ordering)
         context = {'page_obj': page_obj,
                    'search_form': self.form_class,
-                   'filter_form': FilterRequestForm}
+                   'filter_form': FilterOrderForm}
         return render(request, self.template_name, context)
 
     def post(self, request, **parameters):
         data = request.POST
-        search_form = SearchRequestForm(data)
-        filter_form = FilterRequestForm(data)
+        search_form = SearchOrderForm(data)
+        filter_form = FilterOrderForm(data)
 
         if 'search' in data and search_form.is_valid():
             cleaned_data = search_form.cleaned_data
-            request_id = cleaned_data['request_id']
-            return redirect('request_by_id', request_id)
+            order_id = cleaned_data['order_id']
+            return redirect('order_by_id', order_id)
 
         if 'filter' in data and filter_form.is_valid and len(data) > 2:  # if there are only 2 params, no filter is applied
             filter_values = [parameter for parameter, value in data.items() if value == 'on']
-            return redirect('requests_filtered', filter_values)
+            return redirect('orders_filtered', filter_values)
 
         else:
             messages.error(request, "Invalid input. Please make sure your search or filter criteria are correct "
@@ -196,29 +196,29 @@ class RequestView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
             return render(request, self.template_name, context)
 
 
-class SingleRequestView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
-    permission_required = ['website.view_requests', 'website.change_requests']
-    template_name = 'website/requests_single.html'
-    model = Requests
-    form_class = SearchRequestForm
+class SingleOrderView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = ['website.view_order', 'website.change_order']
+    template_name = 'website/order_single.html'
+    model = Order
+    form_class = SearchOrderForm
 
-    def get(self, request, **request_id):
-        request_id = request_id['request_id']
+    def get(self, request, **order_id):
+        order_id = order_id['order_id']
         try:
-            request_object = get_object_or_404(self.model.objects, request_id=request_id)
-            context = {'request_object': request_object}
+            order_object = get_object_or_404(self.model.objects, order_id=order_id)
+            context = {'order_object': order_object}
             return render(request, self.template_name, context)
         except Http404:
-            messages.error(request, "There is no such request")
-            return redirect('requests')
+            messages.error(request, "There is no such order")
+            return redirect('orders')
 
 
-class FilterRequestView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
-    permission_required = ['website.view_requests', 'website.change_requests']
-    template_name = 'website/requests_filter.html'
+class FilterOrderView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = ['website.view_order', 'website.change_order']
+    template_name = 'website/order_filter.html'
     paginate_by = 20
-    model = Requests
-    form_class = SearchRequestForm
+    model = Order
+    form_class = SearchOrderForm
     order_by = 'item_id'
 
     def get_filtered_obj(self, filter_values):
@@ -239,7 +239,7 @@ class FilterRequestView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
             min_quantity = int(quantity.split('_')[1])
             max_quantity = int(quantity.split('_')[2])
 
-        requests_objects = self.model.objects.filter(
+        order_objects = self.model.objects.filter(
             price_without_VAT__lte=max_price,
             price_without_VAT__gte=min_price,
             quantity__lte=max_quantity,
@@ -250,22 +250,22 @@ class FilterRequestView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
             # if all statuses are on, there is no need to filter by status
             match len(status.split('_')):
                 case 2:
-                    filtered_requests_objects = requests_objects.filter(status=FILTER_STATUS[status.split('_')[1]])
+                    filtered_order_objects = order_objects.filter(status=FILTER_STATUS[status.split('_')[1]])
                 case 3:
                     status_1 = FILTER_STATUS[status.split('_')[1]]
                     status_2 = FILTER_STATUS[status.split('_')[2]]
-                    filtered_requests_objects = requests_objects.filter(Q(status=status_1) | Q(status=status_2))
+                    filtered_order_objects = order_objects.filter(Q(status=status_1) | Q(status=status_2))
 
-            return filtered_requests_objects
+            return filtered_order_objects
 
-        filtered_requests_objects = requests_objects
+        filtered_order_objects = order_objects
 
-        return filtered_requests_objects
+        return filtered_order_objects
 
     def get_page_obj(self, request, filter_values):
-        filtered_requests_objects = self.get_filtered_obj(filter_values)
-        ordered_requests_list = filtered_requests_objects.order_by(self.order_by)
-        paginator = Paginator(ordered_requests_list, self.paginate_by)
+        filtered_order_objects = self.get_filtered_obj(filter_values)
+        ordered_order_list = filtered_order_objects.order_by(self.order_by)
+        paginator = Paginator(ordered_order_list, self.paginate_by)
         page_number = request.GET.get("page")
         page_obj = paginator.get_page(page_number)
         return page_obj
@@ -318,155 +318,157 @@ class FilterRequestView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         return render(request, self.template_name, context)
 
 
-class RequestCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
-    permission_required = 'website.add_requests'
-    model = Requests
+class OrderCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    permission_required = 'website.add_order'
+    model = Order
     success_url = '/items'
-    form_class = RequestForm
-    template_name = 'website/requests_create_form.html'
+    form_class = OrderForm
+    template_name = 'website/order_create_form.html'
 
     def get(self, request, item_id):
         context = {
             'item_id': item_id,
-            'request_row_form': RequestForRequestRowForm,
+            'linked_order_form': OrderForLinkedOrderForm,
             'form': self.form_class}
         return render(request, self.template_name, context)
 
     @transaction.atomic
-    def crate_new_request_row(self, request, selected_request_id, request_row_request_id):
-        request_object = Requests.objects.get(request_id=selected_request_id)
+    def create_new_linked_order(self, request, selected_order_id, order_number):
+        order_object = self.model.objects.get(order_id=selected_order_id)
 
         try:
             with transaction.atomic():
-                new_request_row_object = RequestRow(
-                    request_id=request_row_request_id,
-                    request_row=1,
-                    item_id=getattr(request_object, 'item_id'),
-                    unit_of_measurement=getattr(request_object, 'unit_of_measurement'),
-                    quantity=getattr(request_object, 'quantity'),
-                    price_without_VAT=getattr(request_object, 'price_without_VAT'),
-                    comment=getattr(request_object, 'comment'),
-                    status=getattr(request_object, 'status')
+                new_linked_order_object = LinkedOrder(
+                    order_number=order_number,
+                    position=1,
+                    item_id=getattr(order_object, 'item_id'),
+                    unit_of_measurement=getattr(order_object, 'unit_of_measurement'),
+                    quantity=getattr(order_object, 'quantity'),
+                    price_without_VAT=getattr(order_object, 'price_without_VAT'),
+                    comment=getattr(order_object, 'comment'),
+                    status=getattr(order_object, 'status')
                 )
-                new_request_row_object.save()
-                request_object.delete()
+                new_linked_order_object.save()
+                order_object.delete()
         except IntegrityError:
-            messages.error(request, "Error adding to RequestsRow")
+            messages.error(request, "Error connecting the orders")
             return IntegrityError
 
-    def add_to_request_row(self, request_row_request_id, new_request_data):
-        request_row = get_next_request_row_number(request_row_request_id)
-        RequestRow.objects.create(
-            request_id=request_row_request_id,
-            request_row=request_row,
-            item_id=new_request_data['item_id'],
-            unit_of_measurement=new_request_data['unit_of_measurement'],
-            quantity=new_request_data['quantity'],
-            price_without_VAT=new_request_data['price_without_vat'],
-            comment=new_request_data['comment'],
-            status=new_request_data['status']
+    @staticmethod
+    def add_to_linked_order(order_number, new_order_data):
+        next_position = get_next_position_in_linked_order(order_number)
+        LinkedOrder.objects.create(
+            order_number=order_number,
+            position=next_position,
+            item_id=new_order_data['item_id'],
+            unit_of_measurement=new_order_data['unit_of_measurement'],
+            quantity=new_order_data['quantity'],
+            price_without_VAT=new_order_data['price_without_vat'],
+            comment=new_order_data['comment'],
+            status=new_order_data['status']
         )
 
     def post(self, request, *args, **kwargs):
         data = request.POST
-        if RequestForm(data).is_valid():
+        if OrderForm(data).is_valid():
             item_id = int(data['item_id'])
             quantity = int(data['quantity'])
-            item_price = getattr(Items.objects.get(item_id=item_id), 'price_without_VAT')
-            new_request_data = {
+            item_price = getattr(Item.objects.get(item_id=item_id), 'price_without_VAT')
+            new_order_data = {
                 'employee_name': request.user,
-                'item_id': Items.objects.get(item_id=item_id),
+                'item_id': Item.objects.get(item_id=item_id),
                 'unit_of_measurement': data['unit_of_measurement'],
                 'quantity': quantity,
                 'price_without_vat': quantity * item_price,
                 'comment': data['comment'],
                 'status': self.model.Status.NEW,
             }
-            if 'add_to_request' in data:  # checks if the user wanted to add a new request or add it to request row
-                next_request_row_request_id = get_next_request_row_request_id()
+            if 'add_to_order' in data:  # checks if the user wanted to add a new order or add it to linked orders
+                next_order_number = get_next_order_number()
 
-                if not data['requests']:  # implies that there is no request row object yet, it should be created
-                    selected_request_id = int(data['request'])
-                    request_row_request_id = next_request_row_request_id
+                if not data['linked_order']:  # implies that there is no linked order object yet, it should be created
+                    selected_order_id = int(data['order'])
+                    order_number = next_order_number
                     try:
-                        self.crate_new_request_row(request, selected_request_id, request_row_request_id)
-                        self.add_to_request_row(request_row_request_id, new_request_data)
-                        messages.success(request, "Request updated")
+                        self.create_new_linked_order(request, selected_order_id, order_number)
+                        self.add_to_linked_order(order_number, new_order_data)
+                        messages.success(request, "Order updated")
                         return redirect(self.success_url)
                     except IntegrityError:
-                        messages.error(request, "Error adding to Requests Row, contact the administrator")
+                        messages.error(request, "Error combining the orders, contact the administrator")
 
-                if not data['request']:  # implies that there is a request row object to be connected to
-                    selected_request_row_id = int(data['requests'])
-                    request_row_request_id = getattr(RequestRow.objects.get(request_row_id=selected_request_row_id),
-                                                     'request_id')
-                    self.add_to_request_row(request_row_request_id, new_request_data)
-                    messages.success(request, "Request updated")
+                if not data['order']:  # implies that there is a linked order object to be connected to
+                    selected_linked_order_id = int(data['linked_order'])
+                    order_number = getattr(LinkedOrder.objects.get(linked_order_id=selected_linked_order_id),
+                                           'order_number')
+                    self.add_to_linked_order(order_number, new_order_data)
+                    messages.success(request, "Order updated")
                     return redirect(self.success_url)
                 else:
                     messages.error(request, "You didn't chose a request to add to.")
                     context = {
                         'item_id': item_id,
-                        'request_row_form': RequestForRequestRowForm,
+                        'linked_order_form': OrderForLinkedOrderForm,
                         'form': self.form_class}
                     return render(request, self.template_name, context)
 
-            if 'add_to_request' not in data:
+            if 'add_to_order' not in data:
+
                 self.model.objects.create(
-                    item_id=new_request_data['item_id'],
-                    employee_name=new_request_data['employee_name'],
-                    unit_of_measurement=new_request_data['unit_of_measurement'],
-                    quantity=new_request_data['quantity'],
-                    price_without_VAT=new_request_data['price_without_vat'],
-                    comment=new_request_data['comment'],
-                    status=new_request_data['status']
+                    item_id=new_order_data['item_id'],
+                    employee_name=new_order_data['employee_name'],
+                    unit_of_measurement=new_order_data['unit_of_measurement'],
+                    quantity=new_order_data['quantity'],
+                    price_without_VAT=new_order_data['price_without_vat'],
+                    comment=new_order_data['comment'],
+                    status=new_order_data['status']
                 )
                 return redirect(self.success_url)
 
             else:
-                messages.error(request, "Failed to create request. Please check your input and try again.")
+                messages.error(request, "Failed to create order. Please check your input and try again.")
                 context = {
                     'item_id': item_id,
-                    'request_row_form': RequestForRequestRowForm,
+                    'linked_order_form': OrderForLinkedOrderForm,
                     'form': self.form_class}
                 return render(request, self.template_name, context)
 
 
-def update_status(status, request_object, request_model):
+def update_status(status, order_object, order_model):
     match status:
         case 'apr':
-            item_object = request_object.item_id
+            item_object = order_object.item_id
             item_object_previous_quantity = getattr(item_object, 'quantity')
-            request_object_item_quantity = getattr(request_object, 'quantity')
-            if check_if_item_in_stock(item_object_previous_quantity, request_object_item_quantity):
-                request_object.status = request_model.Status.APPROVED
-                request_object.save(update_fields=['status'])
-                current_item_object_quantity = item_object_previous_quantity - request_object_item_quantity
+            order_object_item_quantity = getattr(order_object, 'quantity')
+            if check_if_item_in_stock(item_object_previous_quantity, order_object_item_quantity):
+                order_object.status = order_model.Status.APPROVED
+                order_object.save(update_fields=['status'])
+                current_item_object_quantity = item_object_previous_quantity - order_object_item_quantity
                 item_object.quantity = current_item_object_quantity
                 item_object.save(update_fields=['quantity'])
             else:
                 raise ValidationError(_("Not enough item to complete this order"))
         case 'rej':
-            request_object.status = request_model.Status.REJECTED
-            request_object.save(update_fields=['status'])
+            order_object.status = order_model.Status.REJECTED
+            order_object.save(update_fields=['status'])
 
         case 'new':
-            request_object.status = request_model.Status.NEW
-            request_object.save(update_fields=['status'])
+            order_object.status = order_model.Status.NEW
+            order_object.save(update_fields=['status'])
 
 
-class RequestUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
-    permission_required = 'website.change_requests'
-    model = Requests
-    form_class = RequestStatusForm
-    success_url = '/requests'
-    template_name = 'website/requests_update_form.html'
+class OrderUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    permission_required = 'website.change_order'
+    model = Order
+    form_class = OrderStatusForm
+    success_url = '/orders'
+    template_name = 'website/order_update_form.html'
 
     def get(self, request, pk):
-        request_object = Requests.objects.get(request_id=pk)
+        order_object = self.model.objects.get(order_id=pk)
         context = {
-            'request_object': request_object,
-            'request_id': pk,
+            'order_object': order_object,
+            'order_id': pk,
             'form': self.form_class}
         return render(request, self.template_name, context)
 
@@ -474,74 +476,78 @@ class RequestUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView)
     def post(self, request, *args, **kwargs):
         data = request.POST
         status = data['status']
-        request_id = int(data['request_id'])
-        request_object = self.model.objects.get(request_id=request_id)
+        order_id = int(data['order_id'])
+        order_object = self.model.objects.get(order_id=order_id)
 
         try:
             with transaction.atomic():
-                update_status(status, request_object, self.model)
+                update_status(status, order_object, self.model)
 
                 return redirect(self.success_url)
 
         except ValidationError:
             messages.error(request, "There is not enough items in stock to complete this order")
 
-            request_object = self.model.objects.get(request_id=int(data['request_id']))
+            order_object = self.model.objects.get(order_id=int(data['order_id']))
             context = {
-                'request_object': request_object,
-                'request_id': data['request_id'],
+                'order_object': order_object,
+                'order_id': data['order_id'],
                 'form': self.form_class}
 
             return render(request, self.template_name, context)
 
 
-class RequestRowView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
-    permission_required = ['website.view_requestrow', 'website.change_requestrow']
-    template_name = 'website/request_row.html'
+class LinkedOrderView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = ['website.view_linkedorder', 'website.change_linkedorder']
+    template_name = 'website/linked_order.html'
     paginate_by = 20
-    model = RequestRow
+    model = LinkedOrder
 
 
-class RequestRowUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
-    permission_required = 'website.change_requestrow'
-    model = RequestRow
-    form_class = RequestStatusForm
-    success_url = '/request_row'
-    template_name = 'website/request_row_update_form.html'
+class LinkedOrderUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    permission_required = 'website.change_linkedorder'
+    model = LinkedOrder
+    form_class = LinkedOrderStatusForm
+    success_url = '/linked_orders'
+    template_name = 'website/linked_order_update_form.html'
 
     def get(self, request, pk):
-        first_request_row_object = self.model.objects.get(request_id=pk, request_row=1)
-        request_objects = self.model.objects.filter(request_id=pk)
+        first_linked_order_object = self.model.objects.get(order_number=pk, position=1)
+        order_objects = self.model.objects.filter(order_number=pk)
         context = {
-            'request_row_object': first_request_row_object,
-            'request_row_objects': request_objects,
-            'request_id': pk,
+            'linked_order_object': first_linked_order_object,
+            'linked_order_objects': order_objects,
+            'order_number': pk,
             'form': self.form_class}
+
         return render(request, self.template_name, context)
 
     @transaction.atomic
     def post(self, request, *args, **kwargs):
         data = request.POST
         status = data['status']
-        request_row_request_id = int(data['request_id'])
-        number_of_request_in_request_row = self.model.objects.filter(request_id=request_row_request_id).count()
+        comment = data['comment']
+        order_number = int(data['order_number'])
+        orders_in_linked_order_count = self.model.objects.filter(order_number=order_number).count()
         try:
             with transaction.atomic():
 
-                for number in range(1, number_of_request_in_request_row + 1):
-                    request_row_object = self.model.objects.get(request_id=request_row_request_id, request_row=number)
-                    update_status(status, request_row_object, self.model)
+                for number in range(1, orders_in_linked_order_count + 1):
+                    linked_order_object = self.model.objects.get(order_number=order_number, position=number)
+                    update_status(status, linked_order_object, self.model)
+                    linked_order_object.comment = comment
+                    linked_order_object.save(update_fields=['comment'])
 
                 return redirect(self.success_url)
 
         except ValidationError:
             messages.error(request, "There is not enough items in stock to complete this order")
-            first_request_row_object = self.model.objects.get(request_id=int(data['request_id']), request_row=1)
-            request_objects = RequestRow.objects.filter(request_id=int(data['request_id']))
+            first_linked_order_object = self.model.objects.get(order_number=order_number, position=1)
+            order_objects = self.model.objects.filter(order_number=order_number)
             context = {
-                'request_row_object': first_request_row_object,
-                'request_row_objects': request_objects,
-                'request_id': int(data['request_id']),
+                'linked_order_object': first_linked_order_object,
+                'linked_order_objects': order_objects,
+                'order_number': order_number,
                 'form': self.form_class}
 
             return render(request, self.template_name, context)

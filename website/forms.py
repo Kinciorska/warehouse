@@ -3,7 +3,7 @@ from django.forms import ModelForm
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
-from .models import Items, Requests, RequestRow
+from .models import Item, Order, LinkedOrder
 
 
 class NewUserForm(UserCreationForm):
@@ -19,43 +19,44 @@ class NewUserForm(UserCreationForm):
 class ItemForm(ModelForm):
 
     class Meta:
-        model = Items
+        model = Item
         fields = ('item_name', 'item_group', 'unit_of_measurement', 'quantity', 'price_without_VAT', 'status',
                   'storage_location', 'contact_person', 'photo')
 
 
-class RequestStatusForm(ModelForm):
+class OrderStatusForm(ModelForm):
 
     class Meta:
-        model = Requests
+        model = Order
         fields = ('status', 'comment')
 
 
-class RequestForm(ModelForm):
+class OrderForm(ModelForm):
 
     class Meta:
-        model = Requests
+        model = Order
         fields = ('unit_of_measurement', 'quantity', 'comment')
 
 
-class RequestForRequestRowForm(forms.Form):
-    request = forms.ModelChoiceField(queryset=Requests.objects.filter(status=Requests.Status.NEW), required=False)
-    requests = forms.ModelChoiceField(queryset=RequestRow.objects.filter(status=RequestRow.Status.NEW),
-                                      required=False)
+class OrderForLinkedOrderForm(forms.Form):
+    order = forms.ModelChoiceField(queryset=Order.objects.filter(status=Order.Status.NEW),
+                                   required=False)
+    linked_order = forms.ModelChoiceField(queryset=LinkedOrder.objects.filter(status=LinkedOrder.Status.NEW),
+                                          required=False)
 
 
-class RequestRowStatusForm(ModelForm):
+class LinkedOrderStatusForm(ModelForm):
 
     class Meta:
-        model = RequestRow
+        model = LinkedOrder
         fields = ('status', 'comment')
 
 
-class SearchRequestForm(forms.Form):
-    request_id = forms.IntegerField(label="", widget=forms.NumberInput(attrs={'placeholder': 'Search...'}))
+class SearchOrderForm(forms.Form):
+    order_id = forms.IntegerField(label="", widget=forms.NumberInput(attrs={'placeholder': 'Search...'}))
 
 
-class FilterRequestForm(forms.Form):
+class FilterOrderForm(forms.Form):
     quantity_0_10 = forms.BooleanField(label="QUANTITY <10", required=False)
     quantity_10_50 = forms.BooleanField(label="QUANTITY 10-50", required=False)
     quantity_50_100 = forms.BooleanField(label="QUANTITY 50-100", required=False)

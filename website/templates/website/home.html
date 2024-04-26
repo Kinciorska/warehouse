@@ -10,14 +10,14 @@
     {% if user.is_authenticated %}
         <p>What do you want to do?</p>
 
-        {% if perms.website.view_items %}
+        {% if perms.website.view_item %}
             <a href="/items">See items</a>
         {% endif %}
-        {% if perms.website.view_requests %}
-            <a href="{% url 'requests' %}">See Requests</a>
+        {% if perms.website.view_order %}
+            <a href="{% url 'orders' %}">See Orders</a>
         {% endif %}
-        {% if perms.website.view_requestrow %}
-            <a href="{% url 'request_row' %}">See Request Rows</a>
+        {% if perms.website.view_linkedorder %}
+            <a href="{% url 'linked_orders' %}">See Linked Orders</a>
         {% else %}
             <p>Contact your administrator to give you more access</p>
         {% endif %}

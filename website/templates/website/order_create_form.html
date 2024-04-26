@@ -2,7 +2,7 @@
 
 {% load crispy_forms_tags %}
 
-{% block title %} TMA Warehouse Requests {% endblock %}
+{% block title %} TMA Warehouse Orders {% endblock %}
 
 {% block content %}
 
@@ -12,8 +12,8 @@
     {{ form.as_p }}
     <input type="hidden" name="item_id" value={{ item_id }}>
     <input type="submit" value="Submit">
-    {{ request_row_form }}
-    <input type="submit" name="add_to_request" value="Add to Request">
+    {{ linked_order_form }}
+    <input type="submit" name="add_to_order" value="Add to Order">
 </form>
 
 <a href="/items/">Cancel</a>

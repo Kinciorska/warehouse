@@ -2,16 +2,16 @@
 
 {% load crispy_forms_tags %}
 
-{% block title %} TMA Warehouse Requests {% endblock %}
+{% block title %} TMA Warehouse Orders {% endblock %}
 
 {% block content %}
 
-<h3> Change the request: </h3>
-    <h4>{{ request_object }}</h4>
+<h3> Change the order: </h3>
+    <h4>{{ order_object }}</h4>
 
 <form method="post">{% csrf_token %}
     {{ form.as_p }}
-    <input type="hidden" name="request_id" value={{ request_id }}>
+    <input type="hidden" name="order_id" value={{ order_id }}>
     <input type="submit" value="Update">
 </form>
 

@@ -2,8 +2,8 @@ from django.contrib import admin
 from django.urls import path
 
 from website.views import (HomePageView, RegisterView, LoginView, LogoutView, ItemsView, ItemUpdateView, ItemDeleteView,
-                           RequestView, SingleRequestView, FilterRequestView, RequestCreateView, RequestUpdateView,
-                           RequestRowView, RequestRowUpdateView)
+                           OrderView, SingleOrderView, FilterOrderView, OrderCreateView, OrderUpdateView,
+                           LinkedOrderView, LinkedOrderUpdateView)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -15,12 +15,12 @@ urlpatterns = [
     path('items/<ordering>', ItemsView.as_view(), name='items_ordered'),
     path('items/<pk>/update/', ItemUpdateView.as_view(), name='update'),
     path('items/<pk>/delete/', ItemDeleteView.as_view(), name='delete'),
-    path('requests/', RequestView.as_view(), name='requests'),
-    path('requests/<ordering>', RequestView.as_view(), name='requests_ordered'),
-    path('requests/filter/<filtering>', FilterRequestView.as_view(), name='requests_filtered'),
-    path('requests/search/<request_id>', SingleRequestView.as_view(), name='request_by_id'),
-    path('requests/<item_id>/create/', RequestCreateView.as_view(), name='requests_create'),
-    path('requests/<pk>/update/', RequestUpdateView.as_view(), name='requests_update'),
-    path('request_row/', RequestRowView.as_view(), name='request_row'),
-    path('request_row/<pk>/update/', RequestRowUpdateView.as_view(), name='request_row_update'),
+    path('orders/', OrderView.as_view(), name='orders'),
+    path('orders/<ordering>', OrderView.as_view(), name='orders_ordered'),
+    path('orders/filter/<filtering>', FilterOrderView.as_view(), name='orders_filtered'),
+    path('orders/search/<order_id>', SingleOrderView.as_view(), name='order_by_id'),
+    path('orders/<item_id>/create/', OrderCreateView.as_view(), name='orders_create'),
+    path('orders/<pk>/update/', OrderUpdateView.as_view(), name='orders_update'),
+    path('linked_orders/', LinkedOrderView.as_view(), name='linked_orders'),
+    path('linked_orders/<pk>/update/', LinkedOrderUpdateView.as_view(), name='linked_orders_update'),
 ]

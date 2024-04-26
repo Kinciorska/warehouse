@@ -3,7 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
 
 
-class Items(models.Model):
+class Item(models.Model):
     class ItemGroup(models.TextChoices):
         ITEM_GROUP_1 = 'G-1', _("Item group 1")
         ITEM_GROUP_2 = 'G-2', _("Item group 2")
@@ -31,50 +31,49 @@ class Items(models.Model):
         return self.item_name
 
 
-class Requests(models.Model):
+class Order(models.Model):
 
     class Status(models.TextChoices):
         NEW = 'new', _("New")
         APPROVED = 'apr', _("Approved")
         REJECTED = 'rej', _("Rejected")
 
-    request_id = models.BigAutoField(primary_key=True)
+    order_id = models.BigAutoField(primary_key=True)
     employee_name = models.ForeignKey(User, on_delete=models.CASCADE)
-    item_id = models.ForeignKey(Items, on_delete=models.CASCADE)
-    unit_of_measurement = models.CharField(max_length=3, choices=Items.ItemUnit)
+    item_id = models.ForeignKey(Item, on_delete=models.CASCADE)
+    unit_of_measurement = models.CharField(max_length=3, choices=Item.ItemUnit)
     quantity = models.IntegerField(default=1)
     price_without_VAT = models.DecimalField(max_digits=6, decimal_places=2)
     comment = models.TextField(max_length=250, blank=True)
     status = models.CharField(max_length=3, choices=Status, default=Status.NEW)
 
     class Meta:
-        verbose_name_plural = "Requests"
         ordering = ['item_id']
 
     def __str__(self):
         return f"Item: {self.item_id} in quantity: {self.quantity}. Status: {self.status}"
 
 
-class RequestRow(models.Model):
+class LinkedOrder(models.Model):
 
     class Status(models.TextChoices):
         NEW = 'new', _("New")
         APPROVED = 'apr', _("Approved")
         REJECTED = 'rej', _("Rejected")
 
-    request_row_id = models.BigAutoField(primary_key=True)
-    request_id = models.IntegerField()
-    request_row = models.IntegerField()
-    item_id = models.ForeignKey(Items, on_delete=models.CASCADE)
-    unit_of_measurement = models.CharField(max_length=3, choices=Items.ItemUnit)
+    linked_order_id = models.BigAutoField(primary_key=True)
+    order_number = models.IntegerField()
+    position = models.IntegerField()
+    item_id = models.ForeignKey(Item, on_delete=models.CASCADE)
+    unit_of_measurement = models.CharField(max_length=3, choices=Item.ItemUnit)
     quantity = models.IntegerField(default=1)
     price_without_VAT = models.DecimalField(max_digits=6, decimal_places=2)
     comment = models.TextField(max_length=250, blank=True)
     status = models.CharField(max_length=3, choices=Status, default=Status.NEW)
 
     class Meta:
-        verbose_name_plural = "Request Rows"
-        ordering = ['request_id']
+        verbose_name_plural = "Linked Orders"
+        ordering = ['order_number']
 
     def __str__(self):
-        return f"Request number: {self.request_id} Item: {self.item_id}"
+        return f"Order number: {self.order_number} Item: {self.item_id}"

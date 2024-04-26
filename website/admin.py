@@ -1,21 +1,21 @@
 from django.contrib import admin
 
-from .models import Items, Requests, RequestRow
+from .models import Item, Order, LinkedOrder
 
 
-class ItemsAdmin(admin.ModelAdmin):
+class ItemAdmin(admin.ModelAdmin):
     list_display = ['item_name', 'item_group', 'unit_of_measurement', 'quantity', 'price_without_VAT', 'status']
 
 
-class RequestsAdmin(admin.ModelAdmin):
+class OrderAdmin(admin.ModelAdmin):
     list_display = ['employee_name', 'item_id', 'unit_of_measurement', 'quantity', 'price_without_VAT', 'status']
 
 
-class RequestRowAdmin(admin.ModelAdmin):
-    list_display = ['request_id', 'request_row', 'item_id', 'unit_of_measurement', 'quantity', 'price_without_VAT',
+class LinkedOrderAdmin(admin.ModelAdmin):
+    list_display = ['order_number', 'position', 'item_id', 'unit_of_measurement', 'quantity', 'price_without_VAT',
                     'status']
 
 
-admin.site.register(Items, ItemsAdmin)
-admin.site.register(Requests, RequestsAdmin)
-admin.site.register(RequestRow, RequestRowAdmin)
+admin.site.register(Item, ItemAdmin)
+admin.site.register(Order, OrderAdmin)
+admin.site.register(LinkedOrder, LinkedOrderAdmin)

@@ -59,8 +59,8 @@
                     <a href="/items/{{item.item_id}}/delete/">Delete</a>
                 {% endif %}
             </td>
-            <td>{% if perms.website.add_requests %}
-                    <a href="/requests/{{item.item_id}}/create">Order</a>
+            <td>{% if perms.website.add_order %}
+                    <a href="/orders/{{item.item_id}}/create">Order</a>
                 {% endif %}
             </td>
             {% endfor %}

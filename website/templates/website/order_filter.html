@@ -2,14 +2,14 @@
 
 {% load crispy_forms_tags %}
 
-{% block title %} TMA Warehouse Requests {% endblock %}
+{% block title %} TMA Warehouse Orders {% endblock %}
 
 {% block content %}
 
-<h4>REQUEST LIST</h4>
+<h4>ORDER LIST</h4>
 
 <div class="wrap_search">
-    <form id="search_request" class="search_form" method="post">
+    <form id="search_order" class="search_form" method="post">
         {{ search_form|crispy }}
         {% csrf_token %}
     <button type="submit">
@@ -21,44 +21,44 @@
 
 <table>
     <thead>
-        <th class="single_request_table_head">NUMBER</th>
-        <th class="single_request_table_head">EMPLOYEE NAM</th>
-        <th class="single_request_table_head">ITEM</th>
-        <th class="single_request_table_head">UNIT OF MEASUREMENT</th>
-        <th class="single_request_table_head">QUANTITY</th>
-        <th class="single_request_table_head">PRICE WITHOUT VAT (UAH)</th>
-        <th class="single_request_table_head">COMMENT</th>
-        <th class="single_request_table_head">STATUS</th>
+        <th class="single_order_table_head">NUMBER</th>
+        <th class="single_order_table_head">EMPLOYEE NAM</th>
+        <th class="single_order_table_head">ITEM</th>
+        <th class="single_order_table_head">UNIT OF MEASUREMENT</th>
+        <th class="single_order_table_head">QUANTITY</th>
+        <th class="single_order_table_head">PRICE WITHOUT VAT (UAH)</th>
+        <th class="single_order_table_head">COMMENT</th>
+        <th class="single_order_table_head">STATUS</th>
     </thead>
     <tbody>
-    {% for request in page_obj %}
+    {% for order in page_obj %}
         <tr>
             <td>
-                {{ request.request_id }}
+                {{ order.order_id }}
             </td>
             <td>
-                {{ request.employee_name|upper }}
+                {{ order.employee_name|upper }}
             </td>
             <td>
-                {{ request.item_id|upper }}
+                {{ order.item_id|upper }}
             </td>
             <td>
-                {{ request.unit_of_measurement|upper }}
+                {{ order.unit_of_measurement|upper }}
             </td>
             <td>
-                {{ request.quantity|upper }}
+                {{ order.quantity|upper }}
             </td>
             <td>
-                {{ request.price_without_VAT|upper }}
+                {{ order.price_without_VAT|upper }}
             </td>
              <td>
-                {{ request.comment|upper }}
+                {{ order.comment|upper }}
             </td>
             <td>
-                {{ request.get_status_display|upper }}
+                {{ order.get_status_display|upper }}
             </td>
             <td>
-                <a href="/requests/{{request.request_id}}/update/">Change status</a>
+                <a href="/orders/{{order.order_id}}/update/">Change status</a>
             </td>
         </tr>
     {% empty %}

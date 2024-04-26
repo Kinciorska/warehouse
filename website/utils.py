@@ -1,22 +1,23 @@
-from .models import Requests, RequestRow
+from .models import Order, LinkedOrder
 
 FILTER_STATUS = {
-    'a': Requests.Status.APPROVED,
-    'r': Requests.Status.REJECTED,
-    'n': Requests.Status.NEW
+    'a': Order.Status.APPROVED,
+    'r': Order.Status.REJECTED,
+    'n': Order.Status.NEW
 }
+
 
 def check_if_item_in_stock(item_quantity, requested_quantity):
     return item_quantity - requested_quantity >= 0
 
 
-def get_next_request_row_request_id():
-    request_id_number = RequestRow.objects.values('request_id').distinct().count()
-    next_request_row_id = request_id_number + 1
-    return next_request_row_id
+def get_next_order_number():
+    order_number_count = LinkedOrder.objects.values('order_number').distinct().count()
+    next_order_number = order_number_count + 1
+    return next_order_number
 
 
-def get_next_request_row_number(next_request_row_id):
-    request_row_number = RequestRow.objects.filter(request_id=next_request_row_id).count()
-    next_request_row_number = request_row_number + 1
-    return next_request_row_number
+def get_next_position_in_linked_order(order_number):
+    identical_order_number_count = LinkedOrder.objects.filter(order_number=order_number).count()
+    next_position = identical_order_number_count + 1
+    return next_position

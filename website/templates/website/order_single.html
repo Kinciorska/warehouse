@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block title %} TMA Warehouse Orders {% endblock %}
+
+{% block content %}
+
+<table>
+    <thead>
+        <th class="single_order_table_head">NUMBER</th>
+        <th class="single_order_table_head">EMPLOYEE NAM</th>
+        <th class="single_order_table_head">ITEM</th>
+        <th class="single_order_table_head">UNIT OF MEASUREMENT</th>
+        <th class="single_order_table_head">QUANTITY</th>
+        <th class="single_order_table_head">PRICE WITHOUT VAT (UAH)</th>
+        <th class="single_order_table_head">COMMENT</th>
+        <th class="single_order_table_head">STATUS</th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+                {{ order_object.order_id }}
+            </td>
+            <td>
+                {{ order_object.employee_name|upper }}
+            </td>
+            <td>
+                {{ order_object.item_id|upper }}
+            </td>
+            <td>
+                {{ order_object.unit_of_measurement|upper }}
+            </td>
+            <td>
+                {{ order_object.quantity|upper }}
+            </td>
+            <td>
+                {{ order_object.price_without_VAT|upper }}
+            </td>
+             <td>
+                {{ order_object.comment|upper }}
+            </td>
+            <td>
+                {{ order_object.get_status_display|upper }}
+            </td>
+            <td>
+                <a href="/orders/{{order_object.order_id}}/update/">Change status</a>
+            </td>
+        </tr>
+</table>
+
+{% endblock%}

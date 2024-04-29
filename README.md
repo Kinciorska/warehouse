@@ -5,13 +5,13 @@ This Python application is designed to automate the management of orders and goo
 ## Features
 
  **User Roles:**
-
 - Employee: Can create orders.
 - Coordinator: Can accept or decline orders and manage stock replenishment.
 - Admin: Manages user permissions and overall system administration.
 
  **Order Management:**
-- Creation of new orders by employees, with the possibility to have multiple items requested in one order
+- Creation of new orders by employees, with the possibility to have multiple items in one order
+- Search and filter functionality for easier access to orders.
 - Stock management, overview of orders by coordinators.
 
  **Secure login system for different user roles:**

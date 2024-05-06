@@ -16,8 +16,8 @@ from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.list import ListView
 
-from .forms import (NewUserForm, ItemForm, OrderStatusForm, OrderForm, OrderForLinkedOrderForm, LinkedOrderStatusForm,
-                    SearchOrderForm, FilterOrderForm)
+from .forms import (NewUserForm, ItemForm, SearchItemForm, OrderStatusForm, OrderForm, OrderForLinkedOrderForm,
+                    LinkedOrderStatusForm, SearchOrderForm, FilterOrderForm)
 from .models import Item, Order, LinkedOrder
 from .utils import FILTER_STATUS, check_if_item_in_stock, get_next_order_number, get_next_position_in_linked_order
 
@@ -88,6 +88,7 @@ class ItemsView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     template_name = 'website/item.html'
     paginate_by = 20
     model = Item
+    form_class = SearchItemForm
     item_form_class = ItemForm
     order_by = 'item_name'
 
@@ -105,25 +106,36 @@ class ItemsView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         page_obj = self.get_page_obj(request, **ordering)
         context = {
             'page_obj': page_obj,
-            'create_item_form': self.item_form_class}
+            'create_item_form': self.item_form_class,
+            'search_form': self.form_class}
 
         return render(request, self.template_name, context)
 
-    def post(self, request, **ordering):
-        form = self.item_form_class(request.POST)
-        if form.is_valid():
-            form.save()
+    def post(self, request, **parameters):
+        print(request.POST)
+        data = request.POST
+        add_item_form = self.item_form_class(data)
+        search_form = self.form_class(data)
+
+        if 'searched_item_name' in data and search_form.is_valid():
+            cleaned_data = search_form.cleaned_data
+            item_name = cleaned_data['searched_item_name']
+            return redirect('item_by_name', item_name)
+
+        if 'item_name' in data and add_item_form.is_valid():
+            add_item_form.save()
             messages.success(request, "Item added successfully")
-            page_obj = self.get_page_obj(request, **ordering)
+            page_obj = self.get_page_obj(request, **parameters)
             context = {
                 'page_obj': page_obj,
-                'create_item_form': self.item_form_class}
+                'create_item_form': self.item_form_class,
+                'search_form': self.form_class}
 
             return render(request, self.template_name, context)
 
         else:
             messages.error(request, "Item not added")
-            page_obj = self.get_page_obj(request, **ordering)
+            page_obj = self.get_page_obj(request, **parameters)
             context = {
                 'page_obj': page_obj,
                 'create_item_form': self.item_form_class}
@@ -145,6 +157,22 @@ class ItemDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = Item
     success_url = '/items'
     template_name_suffix = '_confirm_delete'
+
+
+class SingleItemView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = 'website.view_item'
+    template_name = 'website/item_single.html'
+    model = Item
+
+    def get(self, request, **item_name):
+        item_name = item_name['item_name']
+        try:
+            item_object = get_object_or_404(self.model.objects, item_name=item_name)
+            context = {'item_object': item_object}
+            return render(request, self.template_name, context)
+        except Http404:
+            messages.error(request, "There is no such item")
+            return redirect('items')
 
 
 class OrderView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
@@ -200,7 +228,6 @@ class SingleOrderView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     permission_required = ['website.view_order', 'website.change_order']
     template_name = 'website/order_single.html'
     model = Order
-    form_class = SearchOrderForm
 
     def get(self, request, **order_id):
         order_id = order_id['order_id']

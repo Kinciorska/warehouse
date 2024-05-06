@@ -82,6 +82,11 @@ tr:hover {
   color: #c24d2c
 }
 
+.single_item_table_head{
+  font-family: sans-serif;
+  color: #c24d2c
+}
+
 .messages{
   color: #1a2639;
   text-align: center;

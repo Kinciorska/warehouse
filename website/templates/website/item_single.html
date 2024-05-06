@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block title %} TMA Warehouse Items {% endblock %}
+
+{% block content %}
+
+
+<table>
+    <thead>
+    <th class="single_item_table_head">NAME</th>
+    <th class="single_item_table_head">GROUP</th>
+    <th class="single_item_table_head">UNIT OF MEASUREMENT</th>
+    <th class="single_item_table_head">QUANTITY</th>
+    <th class="single_item_table_head">PRICE WITHOUT VAT (UAH)</th>
+    <th class="single_item_table_head">STATUS</th>
+    <th class="single_item_table_head">STORAGE LOCATION</th>
+    <th class="single_item_table_head">CONTACT PERSON</th>
+    <th class="single_item_table_head">PHOTO</th>
+    </thead>
+    <tbody>
+    <tr>
+        <td>
+            {{ item_object.item_name|upper }}
+        </td>
+        <td>
+            {{ item_object.item_group|upper }}
+        </td>
+        <td>
+            {{ item_object.unit_of_measurement|upper }}
+        </td>
+        <td>
+            {{ item_object.quantity|upper }}
+        </td>
+        <td>
+            {{ item_object.price_without_VAT|upper }}
+        </td>
+        <td>
+            {{ item_object.status|upper }}
+        </td>
+        <td>
+            {{ item_object.storage_location|upper }}
+        </td>
+        <td>
+            {{ item_object.contact_person|upper }}
+        </td>
+        <td>
+            {{ item_object.photo|upper }}
+        </td>
+        <td>{% if perms.website.change_items %}
+            <a href="/items/{{item_object.item_id}}/update/">Update</a>
+            {% endif %}
+            {% if perms.website.change_items %}
+            <a href="/items/{{item_object.item_id}}/delete/">Delete</a>
+            {% endif %}
+        </td>
+        <td>{% if perms.website.add_order %}
+            <a href="/orders/{{item_object.item_id}}/create">Order</a>
+            {% endif %}
+        </td>
+    </tr>
+</table>
+
+{% endblock%}

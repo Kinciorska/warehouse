@@ -10,6 +10,19 @@
 {% block content %}
 
 <h4>ITEMS LIST</h4>
+
+<div class="wrap_search">
+    <form id="search_item" class="search_form" method="post">
+        {{ search_form|crispy }}
+        {% csrf_token %}
+    <button type="submit"
+            name="search"
+            value="search">
+        <i class="fa fa-search"></i>
+    </button>
+    </form>
+</div>
+
 <table>
     <thead>
         <th><a href="{% url 'items_ordered' 'item_name' %}">NAME</a></th>

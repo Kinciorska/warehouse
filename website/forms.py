@@ -56,6 +56,10 @@ class SearchOrderForm(forms.Form):
     order_id = forms.IntegerField(label="", widget=forms.NumberInput(attrs={'placeholder': 'Search...'}))
 
 
+class SearchItemForm(forms.Form):
+    searched_item_name = forms.CharField(max_length=250, label="", widget=forms.TextInput(attrs={'placeholder': 'Search...'}))
+
+
 class FilterOrderForm(forms.Form):
     quantity_0_10 = forms.BooleanField(label="QUANTITY <10", required=False)
     quantity_10_50 = forms.BooleanField(label="QUANTITY 10-50", required=False)

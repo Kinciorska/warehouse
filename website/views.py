@@ -16,10 +16,11 @@ from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.list import ListView
 
-from .forms import (NewUserForm, ItemForm, SearchItemForm, OrderStatusForm, OrderForm, OrderForLinkedOrderForm,
-                    LinkedOrderStatusForm, SearchOrderForm, FilterOrderForm)
+from .forms import (NewUserForm, ItemForm, SearchItemForm, FilterItemForm, OrderStatusForm, OrderForm,
+                    OrderForLinkedOrderForm, LinkedOrderStatusForm, SearchOrderForm, FilterOrderForm)
 from .models import Item, Order, LinkedOrder
-from .utils import FILTER_STATUS, check_if_item_in_stock, get_next_order_number, get_next_position_in_linked_order
+from .utils import (FILTER_STATUS, check_if_item_in_stock, get_next_order_number, get_next_position_in_linked_order,
+                    get_filter_values, get_filtered_obj)
 
 
 class HomePageView(TemplateView):
@@ -90,6 +91,7 @@ class ItemsView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     model = Item
     form_class = SearchItemForm
     item_form_class = ItemForm
+    filter_class = FilterItemForm
     order_by = 'item_name'
 
     def get_page_obj(self, request, **ordering):
@@ -107,20 +109,26 @@ class ItemsView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         context = {
             'page_obj': page_obj,
             'create_item_form': self.item_form_class,
-            'search_form': self.form_class}
+            'search_form': self.form_class,
+            'filter_form': self.filter_class}
 
         return render(request, self.template_name, context)
 
     def post(self, request, **parameters):
-        print(request.POST)
         data = request.POST
         add_item_form = self.item_form_class(data)
         search_form = self.form_class(data)
+        filter_form = FilterItemForm
 
         if 'searched_item_name' in data and search_form.is_valid():
             cleaned_data = search_form.cleaned_data
             item_name = cleaned_data['searched_item_name']
             return redirect('item_by_name', item_name)
+
+        if 'filter' in data and filter_form.is_valid and len(
+                data) > 2:  # if there are only 2 params, no filter is applied
+            filter_values = [parameter for parameter, value in data.items() if value == 'on']
+            return redirect('items_filtered', filter_values)
 
         if 'item_name' in data and add_item_form.is_valid():
             add_item_form.save()
@@ -175,6 +183,43 @@ class SingleItemView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
             return redirect('items')
 
 
+class FilterItemView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = 'website.view_item'
+    template_name = 'website/item_filter.html'
+    paginate_by = 20
+    model = Item
+    form_class = SearchItemForm
+    order_by = 'item_id'
+
+    def get_page_obj(self, request, filter_values):
+        filtered_objects = get_filtered_obj(self.model, filter_values)
+        ordered_object_list = filtered_objects.order_by(self.order_by)
+        paginator = Paginator(ordered_object_list, self.paginate_by)
+        page_number = request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
+        return page_obj
+
+    def get(self, request, filtering):
+        filter_values = get_filter_values(filtering)
+        page_obj = self.get_page_obj(request, filter_values)
+        context = {'page_obj': page_obj,
+                   'search_form': self.form_class}
+        return render(request, self.template_name, context)
+
+    def post(self, request):
+        data = request.POST
+        search_form = self.form_class(data)
+
+        if search_form.is_valid():
+            cleaned_data = search_form.cleaned_data
+            item_name = cleaned_data['searched_item_name']
+            return redirect('item_by_name', item_name)
+
+        else:
+            messages.error(request, "Something went wrong")
+            return redirect('items')
+
+
 class OrderView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     permission_required = ['website.view_order', 'website.change_order']
     template_name = 'website/order.html'
@@ -210,7 +255,8 @@ class OrderView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
             order_id = cleaned_data['order_id']
             return redirect('order_by_id', order_id)
 
-        if 'filter' in data and filter_form.is_valid and len(data) > 2:  # if there are only 2 params, no filter is applied
+        if 'filter' in data and filter_form.is_valid and len(data) > 2:
+            # if there are only 2 params, no filter is applied
             filter_values = [parameter for parameter, value in data.items() if value == 'on']
             return redirect('orders_filtered', filter_values)
 
@@ -248,101 +294,33 @@ class FilterOrderView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     form_class = SearchOrderForm
     order_by = 'item_id'
 
-    def get_filtered_obj(self, filter_values):
-        filter_values = filter_values.split(',')
-        price = filter_values[0]
-        quantity = filter_values[1]
-        status = filter_values[2]
-        min_price = 0
-        max_price = 9999999
-        min_quantity = 0
-        max_quantity = 9999999
-
-        if 'not' not in price:
-            min_price = int(price.split('_')[1])
-            max_price = int(price.split('_')[2])
-
-        if 'not' not in quantity:
-            min_quantity = int(quantity.split('_')[1])
-            max_quantity = int(quantity.split('_')[2])
-
-        order_objects = self.model.objects.filter(
-            price_without_VAT__lte=max_price,
-            price_without_VAT__gte=min_price,
-            quantity__lte=max_quantity,
-            quantity__gte=min_quantity
-        )
-
-        if 'not' not in status and len(quantity.split('_')) <= 3:
-            # if all statuses are on, there is no need to filter by status
-            match len(status.split('_')):
-                case 2:
-                    filtered_order_objects = order_objects.filter(status=FILTER_STATUS[status.split('_')[1]])
-                case 3:
-                    status_1 = FILTER_STATUS[status.split('_')[1]]
-                    status_2 = FILTER_STATUS[status.split('_')[2]]
-                    filtered_order_objects = order_objects.filter(Q(status=status_1) | Q(status=status_2))
-
-            return filtered_order_objects
-
-        filtered_order_objects = order_objects
-
-        return filtered_order_objects
-
     def get_page_obj(self, request, filter_values):
-        filtered_order_objects = self.get_filtered_obj(filter_values)
-        ordered_order_list = filtered_order_objects.order_by(self.order_by)
-        paginator = Paginator(ordered_order_list, self.paginate_by)
+        filtered_objects = get_filtered_obj(self.model, filter_values)
+        ordered_object_list = filtered_objects.order_by(self.order_by)
+        paginator = Paginator(ordered_object_list, self.paginate_by)
         page_number = request.GET.get("page")
         page_obj = paginator.get_page(page_number)
         return page_obj
 
-    @staticmethod
-    def get_min_max_values(filter_value):
-        if not filter_value:
-            return 'not'
-        values_str = ''.join(filter_value)
-        values_list = re.findall(r'\d+', values_str)  # finds numbers
-        values = [int(value) for value in values_list]
-        max_value = max(values)
-        min_value = min(values)
-        values = f'_{min_value}_{max_value}'
-        return values
-
-    @staticmethod
-    def get_status_values(filter_value):
-        if not filter_value:
-            return 'not'
-        values = [f'_{status[7]}' for status in filter_value]
-        values = ''.join(values)
-        return values
-
-    def get_filter_values(self, filtering):
-        filter_values_str = filtering[2:-2]  # removes the square bracket and comma
-        filter_values = filter_values_str.split("', '")
-
-        price = [value for value in filter_values if 'price' in value]
-        price_values = self.get_min_max_values(price)
-        price_values = f'p{price_values}'
-
-        quantity = [value for value in filter_values if 'quantity' in value]
-        quantity_values = self.get_min_max_values(quantity)
-        quantity_values = f'q{quantity_values}'
-
-        status = [value for value in filter_values if 'status' in value]
-        status_values = self.get_status_values(status)
-        status_values = f's{status_values}'
-
-        filter_values = price_values + ',' + quantity_values + ',' + status_values
-
-        return filter_values
-
     def get(self, request, filtering):
-        filter_values = self.get_filter_values(filtering)
+        filter_values = get_filter_values(filtering)
         page_obj = self.get_page_obj(request, filter_values)
         context = {'page_obj': page_obj,
                    'search_form': self.form_class}
         return render(request, self.template_name, context)
+
+    def post(self, request):
+        data = request.POST
+        search_form = self.form_class(data)
+
+        if search_form.is_valid():
+            cleaned_data = search_form.cleaned_data
+            order_id = cleaned_data['order_id']
+            return redirect('order_by_id', order_id)
+
+        else:
+            messages.error(request, "Something went wrong")
+            return redirect('orders')
 
 
 class OrderCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):

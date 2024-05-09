@@ -23,6 +23,14 @@
     </form>
 </div>
 
+<div class="wrap_filter">
+    <form id="filter_item" class="filter_form" method="post">
+        {{ filter_form }}
+        {% csrf_token %}
+        <input type="submit" name="filter" value="Filter">
+    </form>
+</div>
+
 <table>
     <thead>
         <th><a href="{% url 'items_ordered' 'item_name' %}">NAME</a></th>

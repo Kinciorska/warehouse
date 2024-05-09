@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block title %} TMA Warehouse Orders {% endblock %}
+
+{% block content %}
+
+<h4>ITEM LIST</h4>
+
+<div class="wrap_search">
+    <form id="search_item" class="search_form" method="post">
+        {{ search_form|crispy }}
+        {% csrf_token %}
+    <button type="submit">
+        <i class="fa fa-search"></i>
+    </button>
+    </form>
+</div>
+
+
+<table>
+    <thead>
+    <th class="single_item_table_head">NAME</th>
+    <th class="single_item_table_head">GROUP</th>
+    <th class="single_item_table_head">UNIT OF MEASUREMENT</th>
+    <th class="single_item_table_head">QUANTITY</th>
+    <th class="single_item_table_head">PRICE WITHOUT VAT (UAH)</th>
+    <th class="single_item_table_head">STATUS</th>
+    <th class="single_item_table_head">STORAGE LOCATION</th>
+    <th class="single_item_table_head">CONTACT PERSON</th>
+    <th class="single_item_table_head">PHOTO</th>
+    </thead>
+    <tbody>
+    {% for item in page_obj %}
+    <tr>
+        <td>
+            {{ item.item_name|upper }}
+        </td>
+        <td>
+            {{ item.item_group|upper }}
+        </td>
+        <td>
+            {{ item.unit_of_measurement|upper }}
+        </td>
+        <td>
+            {{ item.quantity|upper }}
+        </td>
+        <td>
+            {{ item.price_without_VAT|upper }}
+        </td>
+        <td>
+            {{ item.status|upper }}
+        </td>
+        <td>
+            {{ item.storage_location|upper }}
+        </td>
+        <td>
+            {{ item.contact_person|upper }}
+        </td>
+        <td>
+            {{ item.photo|upper }}
+        </td>
+        <td>{% if perms.website.change_items %}
+            <a href="/items/{{item_object.item_id}}/update/">Update</a>
+            {% endif %}
+            {% if perms.website.change_items %}
+            <a href="/items/{{item_object.item_id}}/delete/">Delete</a>
+            {% endif %}
+        </td>
+        <td>{% if perms.website.add_order %}
+            <a href="/orders/{{item_object.item_id}}/create">Order</a>
+            {% endif %}
+        </td>
+    </tr>
+    {% empty %}
+    <p>Oops! We couldn't find any records matching your filter criteria.</p>
+    
+    {% endfor %}
+ </table>
+
+<div class="pagination">
+    <span class="step-links">
+        {% if page_obj.has_previous %}
+            <a href="?page=1">&laquo; first</a>
+            <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+    </span>
+</div>
+
+{% endblock%}

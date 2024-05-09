@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path
 
 from website.views import (HomePageView, RegisterView, LoginView, LogoutView, ItemsView, ItemUpdateView, ItemDeleteView,
-                           SingleItemView, OrderView, SingleOrderView, FilterOrderView, OrderCreateView, OrderUpdateView,
+                           SingleItemView, FilterItemView, OrderView, SingleOrderView, FilterOrderView, OrderCreateView, OrderUpdateView,
                            LinkedOrderView, LinkedOrderUpdateView)
 
 urlpatterns = [
@@ -16,6 +16,7 @@ urlpatterns = [
     path('items/<pk>/update/', ItemUpdateView.as_view(), name='update'),
     path('items/<pk>/delete/', ItemDeleteView.as_view(), name='delete'),
     path('items/search/<item_name>', SingleItemView.as_view(), name='item_by_name'),
+    path('items/filter/<filtering>', FilterItemView.as_view(), name='items_filtered'),
     path('orders/', OrderView.as_view(), name='orders'),
     path('orders/<ordering>', OrderView.as_view(), name='orders_ordered'),
     path('orders/filter/<filtering>', FilterOrderView.as_view(), name='orders_filtered'),

@@ -16,12 +16,16 @@ def check_if_item_in_stock(item_quantity, requested_quantity):
 
 
 def get_next_order_number():
+    """Returns the next available id to create a new Linked Order object"""
+
     order_number_count = LinkedOrder.objects.values('order_number').distinct().count()
     next_order_number = order_number_count + 1
     return next_order_number
 
 
 def get_next_position_in_linked_order(order_number):
+    """Returns the next available order number to assign an order to a Linked Order object"""
+
     identical_order_number_count = LinkedOrder.objects.filter(order_number=order_number).count()
     next_position = identical_order_number_count + 1
     return next_position

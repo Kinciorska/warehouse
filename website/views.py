@@ -1,5 +1,3 @@
-import re
-
 from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
@@ -8,7 +6,6 @@ from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.http import Http404
 from django.db import IntegrityError, transaction
-from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.translation import gettext_lazy as _
 from django.views import View
@@ -19,15 +16,19 @@ from django.views.generic.list import ListView
 from .forms import (NewUserForm, ItemForm, SearchItemForm, FilterItemForm, OrderStatusForm, OrderForm,
                     OrderForLinkedOrderForm, LinkedOrderStatusForm, SearchOrderForm, FilterOrderForm)
 from .models import Item, Order, LinkedOrder
-from .utils import (FILTER_STATUS, check_if_item_in_stock, get_next_order_number, get_next_position_in_linked_order,
+from .utils import (check_if_item_in_stock, get_next_order_number, get_next_position_in_linked_order,
                     get_filter_values, get_filtered_obj)
 
 
 class HomePageView(TemplateView):
+    """View class displaying the home page of the application."""
+
     template_name = 'website/home.html'
 
 
 class RegisterView(View):
+    """View class allowing user registration."""
+
     template_name = 'website/register.html'
     form_class = NewUserForm
 
@@ -50,6 +51,8 @@ class RegisterView(View):
 
 
 class LoginView(View):
+    """View class allowing user log in."""
+
     template_name = 'website/login.html'
     form_class = AuthenticationForm
 
@@ -77,6 +80,7 @@ class LoginView(View):
 
 
 class LogoutView(View):
+    """View class allowing user log out."""
 
     def get(self, request):
         logout(request)
@@ -85,6 +89,8 @@ class LogoutView(View):
 
 
 class ItemsView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    """View class displaying all Items, paginated by 20 per page."""
+
     permission_required = 'website.view_item'
     template_name = 'website/item.html'
     paginate_by = 20
@@ -115,6 +121,10 @@ class ItemsView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         return render(request, self.template_name, context)
 
     def post(self, request, **parameters):
+        """
+            Depending on the form name in the POST data, it redirects to a searched Item, returns filtered Items, or
+            creates a new Item object.
+        """
         data = request.POST
         add_item_form = self.item_form_class(data)
         search_form = self.form_class(data)
@@ -152,6 +162,8 @@ class ItemsView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
 
 
 class ItemUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    """View class allowing coordinators update the Item quantity and information."""
+
     permission_required = 'website.change_item'
     model = Item
     success_url = '/items'
@@ -161,6 +173,8 @@ class ItemUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
 
 
 class ItemDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    """View class allowing coordinators to delete a specified Item."""
+
     permission_required = 'website.delete_items'
     model = Item
     success_url = '/items'
@@ -168,6 +182,8 @@ class ItemDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
 
 
 class SingleItemView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    """View class displaying only one Item."""
+
     permission_required = 'website.view_item'
     template_name = 'website/item_single.html'
     model = Item
@@ -184,6 +200,8 @@ class SingleItemView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
 
 
 class FilterItemView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    """View class which returns Items filtered by values specified by the user."""
+
     permission_required = 'website.view_item'
     template_name = 'website/item_filter.html'
     paginate_by = 20
@@ -221,6 +239,8 @@ class FilterItemView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
 
 
 class OrderView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    """View class displaying all Orders, paginated by 20 per page."""
+
     permission_required = ['website.view_order', 'website.change_order']
     template_name = 'website/order.html'
     paginate_by = 20
@@ -246,6 +266,7 @@ class OrderView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         return render(request, self.template_name, context)
 
     def post(self, request, **parameters):
+        """ Depending on the form name in the POST data, it redirects to a searched Order or returns filtered Orders."""
         data = request.POST
         search_form = SearchOrderForm(data)
         filter_form = FilterOrderForm(data)
@@ -271,6 +292,8 @@ class OrderView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
 
 
 class SingleOrderView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    """View class displaying only one Order."""
+
     permission_required = ['website.view_order', 'website.change_order']
     template_name = 'website/order_single.html'
     model = Order
@@ -287,6 +310,8 @@ class SingleOrderView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
 
 
 class FilterOrderView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    """View class which returns Orders filtered by values specified by the user."""
+
     permission_required = ['website.view_order', 'website.change_order']
     template_name = 'website/order_filter.html'
     paginate_by = 20
@@ -324,6 +349,8 @@ class FilterOrderView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
 
 
 class OrderCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    """View class allowing employees creation of Orders."""
+
     permission_required = 'website.add_order'
     model = Order
     success_url = '/items'
@@ -339,6 +366,7 @@ class OrderCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
 
     @transaction.atomic
     def create_new_linked_order(self, request, selected_order_id, order_number):
+
         order_object = self.model.objects.get(order_id=selected_order_id)
 
         try:
@@ -374,6 +402,12 @@ class OrderCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
         )
 
     def post(self, request, *args, **kwargs):
+        """
+        Depending on the user's choice, either creates a new linked order object and assigns the selected order to it,
+        or assigns it to a selected, previously created linked order object. Note that during this process the Order
+        object is deleted and recreated as a Linked Order object.
+         """
+
         data = request.POST
         if OrderForm(data).is_valid():
             item_id = int(data['item_id'])
@@ -440,6 +474,11 @@ class OrderCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
 
 
 def update_status(status, order_object, order_model):
+    """
+    A function which allows the change of the Order/Linked Orders status. The possible statuses are: New, Accepted,
+    Rejected. After accepting an order, the quantity of the ordered item/s is subtracted from the overall quantity.
+    """
+
     match status:
         case 'apr':
             item_object = order_object.item_id
@@ -463,6 +502,11 @@ def update_status(status, order_object, order_model):
 
 
 class OrderUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    """
+    View class allowing coordinators to update the Order status and information. Upon accepting an order, there is a
+    custom validation which checks if there is enough items in stock to complete this order.
+    """
+
     permission_required = 'website.change_order'
     model = Order
     form_class = OrderStatusForm
@@ -503,6 +547,8 @@ class OrderUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
 
 
 class LinkedOrderView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    """View class displaying all Linked Orders, paginated by 20 per page."""
+
     permission_required = ['website.view_linkedorder', 'website.change_linkedorder']
     template_name = 'website/linked_order.html'
     paginate_by = 20
@@ -510,6 +556,10 @@ class LinkedOrderView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
 
 
 class LinkedOrderUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    """
+    View class allowing coordinators to update the Linked Order status and information. Upon accepting an order, there
+    is a custom validation which checks if there is enough items in stock for each of the linked orders to be completed.
+    """
     permission_required = 'website.change_linkedorder'
     model = LinkedOrder
     form_class = LinkedOrderStatusForm

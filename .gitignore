@@ -105,6 +105,7 @@ __pypackages__/
 
 # Environments
 envs/.django
+envs/.postgres
 .venv
 env/
 venv/

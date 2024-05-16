@@ -44,17 +44,36 @@ Follow these steps to build and run the app.
    ```bash
    pip install -r requirements.txt
    ```
+### Build the Docker Image:
 
+Needed environment files:
+
+- .django
+
+- .postgres
+
+Environment files should be located in .envs directory, examples of these environment files are available in the same directory.
+ 
+Build the Docker container using
+```
+docker-compose build
+```
+### Build the Docker Container:
+Run the Docker container in the background using
+```
+docker-compose up -d
+```
 ### Apply migrations:
 Apply Django migrations using
 
    ```bash
-  python manage.py migrate
+  docker-compose run web python manage.py migrate
    ```
 
 ### Technologies
 - Django
 - PostgreSQL
+- Docker
 
 
 #### License

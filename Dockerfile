@@ -8,6 +8,8 @@ ARG PYTHON_VERSION=3.10
 
 FROM python:${PYTHON_VERSION}-slim-bullseye as base
 
+RUN adduser --system --no-create-home nonroot
+
 
 # Prevents Python from writing pyc files.
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -23,7 +25,8 @@ RUN pip install --upgrade pip
 COPY ./requirements.txt .
 RUN pip install -r requirements.txt
 
+USER nonroot
+
 EXPOSE 8000
 
 COPY . /code/
-

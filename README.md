@@ -32,18 +32,6 @@ Follow these steps to build and run the app.
    ```bash
    git clone https://github.com/Kinciorska/warehouse.git
    ```
-### Set up the Python virtual environment:
-
-   ```bash
-   python -m venv venv
-   venv\Scripts\activate
-   ```
-
-### Install Python dependencies:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
 ### Build the Docker Image:
 
 Needed environment files:
